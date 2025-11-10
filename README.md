@@ -1,73 +1,86 @@
-# Welcome to your Lovable project
+# Casa Duna - Sistema de Controle de Estoque
 
-## Project info
+Sistema completo de controle de estoque e operação para o bar Casa Duna.
 
-**URL**: https://lovable.dev/projects/5a7eac5e-9a1a-4e80-a009-357a8cef4def
+## 🚀 Tecnologias
 
-## How can I edit this code?
+- **Frontend**: React + TypeScript + Tailwind CSS
+- **Backend**: Lovable Cloud (PostgreSQL + Edge Functions)
+- **PWA**: Aplicativo instalável para dispositivos móveis
+- **UI**: Shadcn/ui components
 
-There are several ways of editing your application.
+## 📱 Funcionalidades
 
-**Use Lovable**
+### 1. Autenticação
+- Login com nome e PIN do bartender
+- Credenciais padrão:
+  - **Admin**: PIN `1234`
+  - **Casa Duna**: PIN `0000`
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/5a7eac5e-9a1a-4e80-a009-357a8cef4def) and start prompting.
+### 2. Vendas Rápidas
+- Grid visual de drinks
+- Registro de venda com um toque
+- Baixa automática de estoque
+- Bloqueio de venda se ingrediente zerado
+- Cálculo automático de custo
 
-Changes made via Lovable will be committed automatically to this repo.
+### 3. Controle de Estoque
+- Lista de ingredientes com status visual:
+  - 🟢 Verde: OK
+  - 🟡 Amarelo: < 30% do mínimo
+  - 🔴 Vermelho: < 10% do mínimo
+- Alertas para estoque baixo
 
-**Use your preferred IDE**
+### 4. Entrada de Mercadoria
+- Registro de entrada de ingredientes
+- Atualização automática de estoque
+- Histórico de movimentações
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+### 5. Relatórios
+- Vendas do dia
+- Custo total por drink
+- Quantidade vendida por item
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🗄️ Estrutura do Banco
 
-Follow these steps:
+- `ingredients` - Ingredientes e estoque
+- `drinks` - Catálogo de drinks
+- `recipes` - Receitas (ingredientes por drink)
+- `sales` - Vendas realizadas
+- `stock_movements` - Movimentações de estoque
+- `bartenders` - Bartenders com PIN
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+## 📊 Funções do Backend
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+- `process_sale()` - Processa venda e baixa estoque automaticamente
+- `update_ingredient_stock()` - Atualiza estoque em entradas
 
-# Step 3: Install the necessary dependencies.
-npm i
+## 🔐 Segurança
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+- RLS (Row Level Security) habilitado
+- Autenticação via PIN
+- Políticas de acesso configuradas
 
-**Edit a file directly in GitHub**
+## 🎨 Design
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+- Paleta âmbar/dourado inspirada em bar
+- Interface touch-friendly
+- Responsivo mobile-first
+- PWA instalável
 
-**Use GitHub Codespaces**
+## 📱 Instalação como App
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+Acesse o sistema no navegador mobile e adicione à tela inicial:
+- **iOS**: Compartilhar → Adicionar à Tela Inicial
+- **Android**: Menu → Instalar App
 
-## What technologies are used for this project?
+## 🔄 Próximos Passos
 
-This project is built with:
+1. Adicionar mais drinks e ingredientes via Cloud Dashboard
+2. Configurar alertas push para estoque baixo
+3. Exportar relatórios em CSV
+4. Adicionar fotos aos drinks
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/5a7eac5e-9a1a-4e80-a009-357a8cef4def) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+**Desenvolvido com Lovable** 💛
