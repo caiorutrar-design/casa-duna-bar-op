@@ -46,6 +46,7 @@ export type Database = {
           description: string | null
           id: string
           image_url: string | null
+          item_number: number | null
           name: string
           updated_at: string | null
         }
@@ -56,6 +57,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          item_number?: number | null
           name: string
           updated_at?: string | null
         }
@@ -66,6 +68,7 @@ export type Database = {
           description?: string | null
           id?: string
           image_url?: string | null
+          item_number?: number | null
           name?: string
           updated_at?: string | null
         }
@@ -106,6 +109,92 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      order_items: {
+        Row: {
+          created_at: string
+          drink_id: string
+          id: string
+          order_id: string
+          quantity: number
+          status: string
+          unit_cost: number
+        }
+        Insert: {
+          created_at?: string
+          drink_id: string
+          id?: string
+          order_id: string
+          quantity?: number
+          status?: string
+          unit_cost: number
+        }
+        Update: {
+          created_at?: string
+          drink_id?: string
+          id?: string
+          order_id?: string
+          quantity?: number
+          status?: string
+          unit_cost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "order_items_drink_id_fkey"
+            columns: ["drink_id"]
+            isOneToOne: false
+            referencedRelation: "drinks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "order_items_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orders: {
+        Row: {
+          bartender_name: string | null
+          closed_at: string | null
+          created_at: string
+          id: string
+          status: string
+          table_id: string
+          total_cost: number | null
+          updated_at: string
+        }
+        Insert: {
+          bartender_name?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          table_id: string
+          total_cost?: number | null
+          updated_at?: string
+        }
+        Update: {
+          bartender_name?: string | null
+          closed_at?: string | null
+          created_at?: string
+          id?: string
+          status?: string
+          table_id?: string
+          total_cost?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orders_table_id_fkey"
+            columns: ["table_id"]
+            isOneToOne: false
+            referencedRelation: "tables"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       recipes: {
         Row: {
@@ -216,11 +305,40 @@ export type Database = {
           },
         ]
       }
+      tables: {
+        Row: {
+          created_at: string
+          id: string
+          status: string
+          table_number: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          status?: string
+          table_number: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          status?: string
+          table_number?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      add_item_to_order: {
+        Args: { p_drink_id: string; p_order_id: string; p_quantity?: number }
+        Returns: Json
+      }
+      close_order: {
+        Args: { p_bartender_name: string; p_order_id: string }
+        Returns: Json
+      }
       process_sale: {
         Args: {
           p_bartender_name: string
