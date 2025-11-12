@@ -210,8 +210,24 @@ export default function CustomerOrder() {
                                 {item.quantity}x R$ {item.unit_cost.toFixed(2)} = R$ {(item.unit_cost * item.quantity).toFixed(2)}
                               </p>
                             </div>
-                            <Badge className={getStatusColor(item.status)}>
-                              {getStatusText(item.status)}
+                            <Badge
+                              className={
+                                item.status === "delivered"
+                                  ? "bg-success text-primary-foreground"
+                                  : item.status === "ready"
+                                  ? "bg-primary text-primary-foreground"
+                                  : item.status === "preparing"
+                                  ? "bg-warning text-warning-foreground"
+                                  : "bg-muted text-muted-foreground"
+                              }
+                            >
+                              {item.status === "pending"
+                                ? "Pendente"
+                                : item.status === "preparing"
+                                ? "Preparando"
+                                : item.status === "ready"
+                                ? "Pronto"
+                                : "Entregue"}
                             </Badge>
                           </div>
                         </CardContent>

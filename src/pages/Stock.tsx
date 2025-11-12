@@ -2,9 +2,13 @@ import { useEffect, useState } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Package, AlertTriangle } from "lucide-react";
+import { Package, AlertTriangle, Plus, Pencil } from "lucide-react";
 
 interface Ingredient {
   id: string;
@@ -19,6 +23,17 @@ interface Ingredient {
 export default function Stock() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [loading, setLoading] = useState(true);
+  const [editingIngredient, setEditingIngredient] = useState<Ingredient | null>(null);
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    name: "",
+    brand: "",
+    unit: "",
+    current_stock: 0,
+    min_stock: 0,
+    cost_per_unit: 0,
+  });
 
   useEffect(() => {
     fetchIngredients();
@@ -39,6 +54,51 @@ export default function Stock() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleAddIngredient = async () => {
+    try {
+      const { error } = await supabase.from("ingredients").insert([formData]);
+      if (error) throw error;
+      toast.success("Ingrediente adicionado com sucesso");
+      setIsAddDialogOpen(false);
+      setFormData({ name: "", brand: "", unit: "", current_stock: 0, min_stock: 0, cost_per_unit: 0 });
+      fetchIngredients();
+    } catch (error) {
+      console.error("Error adding ingredient:", error);
+      toast.error("Erro ao adicionar ingrediente");
+    }
+  };
+
+  const handleEditIngredient = async () => {
+    if (!editingIngredient) return;
+    try {
+      const { error } = await supabase
+        .from("ingredients")
+        .update(formData)
+        .eq("id", editingIngredient.id);
+      if (error) throw error;
+      toast.success("Ingrediente atualizado com sucesso");
+      setIsEditDialogOpen(false);
+      setEditingIngredient(null);
+      fetchIngredients();
+    } catch (error) {
+      console.error("Error updating ingredient:", error);
+      toast.error("Erro ao atualizar ingrediente");
+    }
+  };
+
+  const openEditDialog = (ingredient: Ingredient) => {
+    setEditingIngredient(ingredient);
+    setFormData({
+      name: ingredient.name,
+      brand: ingredient.brand || "",
+      unit: ingredient.unit,
+      current_stock: ingredient.current_stock,
+      min_stock: ingredient.min_stock,
+      cost_per_unit: ingredient.cost_per_unit,
+    });
+    setIsEditDialogOpen(true);
   };
 
   const getStockStatus = (current: number, min: number) => {
@@ -69,12 +129,85 @@ export default function Stock() {
             <h2 className="text-2xl font-bold text-foreground">Estoque</h2>
             <p className="text-muted-foreground">Controle de ingredientes</p>
           </div>
-          {lowStockCount > 0 && (
-            <Badge variant="destructive" className="gap-1">
-              <AlertTriangle className="h-4 w-4" />
-              {lowStockCount} abaixo do mínimo
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {lowStockCount > 0 && (
+              <Badge variant="destructive" className="gap-1">
+                <AlertTriangle className="h-4 w-4" />
+                {lowStockCount} abaixo do mínimo
+              </Badge>
+            )}
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-2">
+                  <Plus className="h-4 w-4" />
+                  Adicionar Ingrediente
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Adicionar Ingrediente</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="name">Nome</Label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="brand">Marca</Label>
+                    <Input
+                      id="brand"
+                      value={formData.brand}
+                      onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="unit">Unidade</Label>
+                    <Input
+                      id="unit"
+                      placeholder="ml, g, un"
+                      value={formData.unit}
+                      onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="current_stock">Estoque Atual</Label>
+                    <Input
+                      id="current_stock"
+                      type="number"
+                      value={formData.current_stock}
+                      onChange={(e) => setFormData({ ...formData, current_stock: parseFloat(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="min_stock">Estoque Mínimo</Label>
+                    <Input
+                      id="min_stock"
+                      type="number"
+                      value={formData.min_stock}
+                      onChange={(e) => setFormData({ ...formData, min_stock: parseFloat(e.target.value) })}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="cost_per_unit">Custo por Unidade (R$)</Label>
+                    <Input
+                      id="cost_per_unit"
+                      type="number"
+                      step="0.01"
+                      value={formData.cost_per_unit}
+                      onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) })}
+                    />
+                  </div>
+                  <Button onClick={handleAddIngredient} className="w-full">
+                    Adicionar
+                  </Button>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         {ingredients.length === 0 ? (
@@ -109,7 +242,16 @@ export default function Stock() {
                           Custo: R$ {ingredient.cost_per_unit.toFixed(2)}/{ingredient.unit}
                         </p>
                       </div>
-                      <Badge className={status.className}>{status.label}</Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge className={status.className}>{status.label}</Badge>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openEditDialog(ingredient)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -117,6 +259,71 @@ export default function Stock() {
             })}
           </div>
         )}
+
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Editar Ingrediente</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="edit-name">Nome</Label>
+                <Input
+                  id="edit-name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-brand">Marca</Label>
+                <Input
+                  id="edit-brand"
+                  value={formData.brand}
+                  onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-unit">Unidade</Label>
+                <Input
+                  id="edit-unit"
+                  value={formData.unit}
+                  onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-current_stock">Estoque Atual</Label>
+                <Input
+                  id="edit-current_stock"
+                  type="number"
+                  value={formData.current_stock}
+                  onChange={(e) => setFormData({ ...formData, current_stock: parseFloat(e.target.value) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-min_stock">Estoque Mínimo</Label>
+                <Input
+                  id="edit-min_stock"
+                  type="number"
+                  value={formData.min_stock}
+                  onChange={(e) => setFormData({ ...formData, min_stock: parseFloat(e.target.value) })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-cost_per_unit">Custo por Unidade (R$)</Label>
+                <Input
+                  id="edit-cost_per_unit"
+                  type="number"
+                  step="0.01"
+                  value={formData.cost_per_unit}
+                  onChange={(e) => setFormData({ ...formData, cost_per_unit: parseFloat(e.target.value) })}
+                />
+              </div>
+              <Button onClick={handleEditIngredient} className="w-full">
+                Salvar Alterações
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

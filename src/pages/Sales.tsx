@@ -342,23 +342,111 @@ export default function Sales() {
                 <div className="space-y-2">
                   {orderItems.map((item) => (
                     <Card key={item.id}>
-                      <CardContent className="p-3 flex items-center justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="outline">{item.drinks.item_number}</Badge>
-                            <span className="font-semibold">{item.drinks.name}</span>
+                      <CardContent className="p-3">
+                        <div className="flex items-start justify-between gap-2 mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <Badge variant="outline">{item.drinks.item_number}</Badge>
+                              <span className="font-semibold">{item.drinks.name}</span>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {item.quantity}x R$ {item.unit_cost.toFixed(2)} = R$ {(item.unit_cost * item.quantity).toFixed(2)}
+                            </p>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {item.quantity}x R$ {item.unit_cost.toFixed(2)} = R$ {(item.unit_cost * item.quantity).toFixed(2)}
-                          </p>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => removeOrderItem(item.id)}
+                            disabled={item.status !== 'pending'}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeOrderItem(item.id)}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-2 justify-between">
+                          <Badge
+                            className={
+                              item.status === "delivered"
+                                ? "bg-success text-primary-foreground"
+                                : item.status === "ready"
+                                ? "bg-primary text-primary-foreground"
+                                : item.status === "preparing"
+                                ? "bg-warning text-warning-foreground"
+                                : "bg-muted text-muted-foreground"
+                            }
+                          >
+                            {item.status === "pending"
+                              ? "Pendente"
+                              : item.status === "preparing"
+                              ? "Preparando"
+                              : item.status === "ready"
+                              ? "Pronto"
+                              : "Entregue"}
+                          </Badge>
+                          <div className="flex gap-1">
+                            {item.status === "pending" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  try {
+                                    const { error } = await supabase
+                                      .from("order_items")
+                                      .update({ status: "preparing" })
+                                      .eq("id", item.id);
+                                    if (error) throw error;
+                                    toast.success("Item em preparação");
+                                    await fetchOrderItems(currentOrder!.id);
+                                  } catch (error) {
+                                    toast.error("Erro ao atualizar");
+                                  }
+                                }}
+                              >
+                                Preparar
+                              </Button>
+                            )}
+                            {item.status === "preparing" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={async () => {
+                                  try {
+                                    const { error } = await supabase
+                                      .from("order_items")
+                                      .update({ status: "ready" })
+                                      .eq("id", item.id);
+                                    if (error) throw error;
+                                    toast.success("Item pronto");
+                                    await fetchOrderItems(currentOrder!.id);
+                                  } catch (error) {
+                                    toast.error("Erro ao atualizar");
+                                  }
+                                }}
+                              >
+                                Finalizar
+                              </Button>
+                            )}
+                            {item.status === "ready" && (
+                              <Button
+                                size="sm"
+                                onClick={async () => {
+                                  try {
+                                    const { error } = await supabase
+                                      .from("order_items")
+                                      .update({ status: "delivered" })
+                                      .eq("id", item.id);
+                                    if (error) throw error;
+                                    toast.success("Item entregue");
+                                    await fetchOrderItems(currentOrder!.id);
+                                  } catch (error) {
+                                    toast.error("Erro ao atualizar");
+                                  }
+                                }}
+                              >
+                                Entregar
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </CardContent>
                     </Card>
                   ))}
