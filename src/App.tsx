@@ -9,6 +9,7 @@ import Stock from "./pages/Stock";
 import Entry from "./pages/Entry";
 import Reports from "./pages/Reports";
 import CustomerOrder from "./pages/CustomerOrder";
+import BarNotifications from "./pages/BarNotifications";
 import NotFound from "./pages/NotFound";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -59,6 +60,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <Reports />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/bar"
+            element={
+              <ProtectedRoute>
+                <BarNotifications />
               </ProtectedRoute>
             }
           />
