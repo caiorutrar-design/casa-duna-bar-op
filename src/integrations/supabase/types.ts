@@ -38,6 +38,57 @@ export type Database = {
         }
         Relationships: []
       }
+      cash_closures: {
+        Row: {
+          bartender_name: string
+          card_actual: number
+          card_expected: number
+          cash_actual: number
+          cash_expected: number
+          closure_date: string
+          created_at: string
+          id: string
+          observations: string | null
+          pix_actual: number
+          pix_expected: number
+          total_difference: number
+          total_sales: number
+          updated_at: string
+        }
+        Insert: {
+          bartender_name: string
+          card_actual?: number
+          card_expected?: number
+          cash_actual?: number
+          cash_expected?: number
+          closure_date: string
+          created_at?: string
+          id?: string
+          observations?: string | null
+          pix_actual?: number
+          pix_expected?: number
+          total_difference?: number
+          total_sales?: number
+          updated_at?: string
+        }
+        Update: {
+          bartender_name?: string
+          card_actual?: number
+          card_expected?: number
+          cash_actual?: number
+          cash_expected?: number
+          closure_date?: string
+          created_at?: string
+          id?: string
+          observations?: string | null
+          pix_actual?: number
+          pix_expected?: number
+          total_difference?: number
+          total_sales?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       drinks: {
         Row: {
           active: boolean | null
