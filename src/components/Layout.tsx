@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { Home, Package, TrendingUp, FileText, LogOut, Bell, DollarSign } from "lucide-react";
+import { Home, Package, TrendingUp, FileText, LogOut, Bell, DollarSign, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -52,13 +52,13 @@ export const Layout = ({ children }: LayoutProps) => {
       {/* Bottom Navigation */}
       <nav className="bg-card border-t border-border sticky bottom-0 shadow-strong">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-6 gap-2 py-2">
+          <div className="grid grid-cols-7 gap-1 py-2">
             <NavLink
               to="/"
               className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
               activeClassName="text-primary bg-muted"
             >
-              <Home className="h-6 w-6" />
+              <Home className="h-5 w-5" />
               <span className="text-xs font-medium">Vendas</span>
             </NavLink>
             <NavLink
@@ -66,7 +66,7 @@ export const Layout = ({ children }: LayoutProps) => {
               className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
               activeClassName="text-primary bg-muted"
             >
-              <Package className="h-6 w-6" />
+              <Package className="h-5 w-5" />
               <span className="text-xs font-medium">Estoque</span>
             </NavLink>
             <NavLink
@@ -74,7 +74,7 @@ export const Layout = ({ children }: LayoutProps) => {
               className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
               activeClassName="text-primary bg-muted"
             >
-              <TrendingUp className="h-6 w-6" />
+              <TrendingUp className="h-5 w-5" />
               <span className="text-xs font-medium">Entrada</span>
             </NavLink>
             <NavLink
@@ -82,7 +82,7 @@ export const Layout = ({ children }: LayoutProps) => {
               className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
               activeClassName="text-primary bg-muted"
             >
-              <Bell className="h-6 w-6" />
+              <Bell className="h-5 w-5" />
               <span className="text-xs font-medium">Bar</span>
             </NavLink>
             <NavLink
@@ -90,16 +90,24 @@ export const Layout = ({ children }: LayoutProps) => {
               className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
               activeClassName="text-primary bg-muted"
             >
-              <DollarSign className="h-6 w-6" />
+              <DollarSign className="h-5 w-5" />
               <span className="text-xs font-medium">Caixa</span>
+            </NavLink>
+            <NavLink
+              to="/dre"
+              className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+              activeClassName="text-primary bg-muted"
+            >
+              <BarChart3 className="h-5 w-5" />
+              <span className="text-xs font-medium">DRE</span>
             </NavLink>
             <NavLink
               to="/reports"
               className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
               activeClassName="text-primary bg-muted"
             >
-              <FileText className="h-6 w-6" />
-              <span className="text-xs font-medium">Relatórios</span>
+              <FileText className="h-5 w-5" />
+              <span className="text-xs font-medium">Alertas</span>
             </NavLink>
           </div>
         </div>
