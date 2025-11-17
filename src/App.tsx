@@ -11,6 +11,7 @@ import Reports from "./pages/Reports";
 import CustomerOrder from "./pages/CustomerOrder";
 import BarNotifications from "./pages/BarNotifications";
 import CashClosure from "./pages/CashClosure";
+import IncomeStatement from "./pages/IncomeStatement";
 import NotFound from "./pages/NotFound";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -77,6 +78,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <CashClosure />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/dre"
+            element={
+              <ProtectedRoute>
+                <IncomeStatement />
               </ProtectedRoute>
             }
           />
