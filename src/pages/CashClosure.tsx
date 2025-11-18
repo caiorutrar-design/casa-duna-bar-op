@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DollarSign, Calendar, User, TrendingDown, TrendingUp, CheckCircle, Clock } from "lucide-react";
@@ -31,22 +30,13 @@ export default function CashClosure() {
   const [dailySales, setDailySales] = useState<DailySales>({ total: 0, count: 0 });
   const [bartenderName, setBartenderName] = useState("");
   const [cashActual, setCashActual] = useState("");
-  const [cardDebitActual, setCardDebitActual] = useState("");
-  const [cardCreditActual, setCardCreditActual] = useState("");
+  const [cardActual, setCardActual] = useState("");
   const [pixActual, setPixActual] = useState("");
   const [observations, setObservations] = useState("");
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [previousClosures, setPreviousClosures] = useState<PreviousClosure[]>([]);
   const [alreadyClosed, setAlreadyClosed] = useState(false);
-  
-  // Payment methods selection
-  const [paymentMethods, setPaymentMethods] = useState({
-    cash: true,
-    cardDebit: true,
-    cardCredit: true,
-    pix: true,
-  });
 
   const today = format(new Date(), "yyyy-MM-dd");
 
@@ -116,10 +106,9 @@ export default function CashClosure() {
 
   const getTotalActual = () => {
     return (
-      (paymentMethods.cash ? parseFloat(cashActual || "0") : 0) +
-      (paymentMethods.cardDebit ? parseFloat(cardDebitActual || "0") : 0) +
-      (paymentMethods.cardCredit ? parseFloat(cardCreditActual || "0") : 0) +
-      (paymentMethods.pix ? parseFloat(pixActual || "0") : 0)
+      parseFloat(cashActual || "0") +
+      parseFloat(cardActual || "0") +
+      parseFloat(pixActual || "0")
     );
   };
 
@@ -166,8 +155,7 @@ export default function CashClosure() {
       // Reset form
       setBartenderName("");
       setCashActual("");
-      setCardDebitActual("");
-      setCardCreditActual("");
+      setCardActual("");
       setPixActual("");
       setObservations("");
       setAlreadyClosed(true);
