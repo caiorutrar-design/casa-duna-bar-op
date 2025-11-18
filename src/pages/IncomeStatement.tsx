@@ -8,7 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { 
   TrendingUp, TrendingDown, DollarSign, Package, 
-  Download, Calendar, BarChart3
+  Download, Calendar, BarChart3, FileText
 } from "lucide-react";
 import { format, subDays, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,6 +16,7 @@ import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer
 } from "recharts";
+import { exportToPDF, exportToExcel, exportToWord, ExportData } from "@/lib/reportExport";
 
 interface DREData {
   grossRevenue: number;
@@ -167,6 +168,144 @@ export default function IncomeStatement() {
       toast.error("Erro ao carregar DRE");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const exportData: ExportData = {
+        title: "Demonstrativo de Resultados (DRE)",
+        period: `Período: ${format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR })} - ${format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR })}`,
+        data: {
+          "Receita Bruta": `R$ ${dreData.grossRevenue.toFixed(2)}`,
+          "CMV (Custo)": `R$ ${dreData.cogs.toFixed(2)}`,
+          "Lucro Bruto": `R$ ${dreData.grossProfit.toFixed(2)}`,
+          "Margem Bruta": `${dreData.grossMargin.toFixed(1)}%`,
+          "Diferenças de Caixa": `R$ ${dreData.cashDifferences.toFixed(2)}`,
+          "Lucro Líquido": `R$ ${dreData.netProfit.toFixed(2)}`,
+          "Margem Líquida": `${dreData.netMargin.toFixed(1)}%`,
+        },
+        tables: [
+          {
+            title: "Evolução Diária",
+            headers: ["Data", "Receita", "Custo", "Lucro", "Margem %"],
+            rows: dailyMetrics.map((m) => [
+              format(new Date(m.date), "dd/MM/yyyy", { locale: ptBR }),
+              `R$ ${m.revenue.toFixed(2)}`,
+              `R$ ${m.cogs.toFixed(2)}`,
+              `R$ ${m.profit.toFixed(2)}`,
+              `${m.margin.toFixed(1)}%`,
+            ]),
+          },
+          {
+            title: "Top 5 Drinks por Receita",
+            headers: ["Drink", "Receita"],
+            rows: categoryBreakdown.map((c) => [c.name, `R$ ${c.value.toFixed(2)}`]),
+          },
+        ],
+        charts: [
+          { elementId: "chart-revenue-cogs", title: "Receita vs Custo Diário" },
+          { elementId: "chart-profit-margin", title: "Evolução do Lucro e Margem" },
+          { elementId: "chart-top-drinks", title: "Top 5 Drinks por Receita" },
+          { elementId: "chart-summary", title: "Indicadores Resumidos" },
+        ],
+      };
+
+      await exportToPDF(exportData);
+      toast.success("Relatório PDF exportado com sucesso!");
+    } catch (error) {
+      console.error("Error exporting PDF:", error);
+      toast.error("Erro ao exportar PDF");
+    }
+  };
+
+  const handleExportExcel = () => {
+    try {
+      const exportData: ExportData = {
+        title: "DRE",
+        period: `${format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR })} - ${format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR })}`,
+        data: {
+          "Receita Bruta": dreData.grossRevenue.toFixed(2),
+          "CMV (Custo)": dreData.cogs.toFixed(2),
+          "Lucro Bruto": dreData.grossProfit.toFixed(2),
+          "Margem Bruta %": dreData.grossMargin.toFixed(1),
+          "Diferenças de Caixa": dreData.cashDifferences.toFixed(2),
+          "Lucro Líquido": dreData.netProfit.toFixed(2),
+          "Margem Líquida %": dreData.netMargin.toFixed(1),
+        },
+        tables: [
+          {
+            title: "Evolução Diária",
+            headers: ["Data", "Receita", "Custo", "Lucro", "Margem %"],
+            rows: dailyMetrics.map((m) => [
+              format(new Date(m.date), "dd/MM/yyyy", { locale: ptBR }),
+              m.revenue.toFixed(2),
+              m.cogs.toFixed(2),
+              m.profit.toFixed(2),
+              m.margin.toFixed(1),
+            ]),
+          },
+          {
+            title: "Top 5 Drinks",
+            headers: ["Drink", "Receita"],
+            rows: categoryBreakdown.map((c) => [c.name, c.value.toFixed(2)]),
+          },
+        ],
+      };
+
+      exportToExcel(exportData);
+      toast.success("Relatório Excel exportado com sucesso!");
+    } catch (error) {
+      console.error("Error exporting Excel:", error);
+      toast.error("Erro ao exportar Excel");
+    }
+  };
+
+  const handleExportWord = async () => {
+    try {
+      const exportData: ExportData = {
+        title: "Demonstrativo de Resultados (DRE)",
+        period: `Período: ${format(new Date(startDate), "dd/MM/yyyy", { locale: ptBR })} - ${format(new Date(endDate), "dd/MM/yyyy", { locale: ptBR })}`,
+        data: {
+          "Receita Bruta": `R$ ${dreData.grossRevenue.toFixed(2)}`,
+          "CMV (Custo)": `R$ ${dreData.cogs.toFixed(2)}`,
+          "Lucro Bruto": `R$ ${dreData.grossProfit.toFixed(2)}`,
+          "Margem Bruta": `${dreData.grossMargin.toFixed(1)}%`,
+          "Diferenças de Caixa": `R$ ${dreData.cashDifferences.toFixed(2)}`,
+          "Lucro Líquido": `R$ ${dreData.netProfit.toFixed(2)}`,
+          "Margem Líquida": `${dreData.netMargin.toFixed(1)}%`,
+        },
+        tables: [
+          {
+            title: "Evolução Diária",
+            headers: ["Data", "Receita", "Custo", "Lucro", "Margem %"],
+            rows: dailyMetrics.map((m) => [
+              format(new Date(m.date), "dd/MM/yyyy", { locale: ptBR }),
+              `R$ ${m.revenue.toFixed(2)}`,
+              `R$ ${m.cogs.toFixed(2)}`,
+              `R$ ${m.profit.toFixed(2)}`,
+              `${m.margin.toFixed(1)}%`,
+            ]),
+          },
+          {
+            title: "Top 5 Drinks por Receita",
+            headers: ["Drink", "Receita"],
+            rows: categoryBreakdown.map((c) => [c.name, `R$ ${c.value.toFixed(2)}`]),
+          },
+        ],
+        charts: [
+          { elementId: "chart-revenue-cogs", title: "Receita vs Custo Diário" },
+          { elementId: "chart-profit-margin", title: "Evolução do Lucro e Margem" },
+          { elementId: "chart-top-drinks", title: "Top 5 Drinks por Receita" },
+          { elementId: "chart-summary", title: "Indicadores Resumidos" },
+        ],
+      };
+
+      await exportToWord(exportData);
+      toast.success("Relatório Word exportado com sucesso!");
+    } catch (error) {
+      console.error("Error exporting Word:", error);
+      toast.error("Erro ao exportar Word");
     }
   };
 

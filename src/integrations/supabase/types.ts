@@ -42,6 +42,10 @@ export type Database = {
         Row: {
           bartender_name: string
           card_actual: number
+          card_credit_actual: number
+          card_credit_expected: number
+          card_debit_actual: number
+          card_debit_expected: number
           card_expected: number
           cash_actual: number
           cash_expected: number
@@ -49,6 +53,7 @@ export type Database = {
           created_at: string
           id: string
           observations: string | null
+          payment_methods_used: Json | null
           pix_actual: number
           pix_expected: number
           total_difference: number
@@ -58,6 +63,10 @@ export type Database = {
         Insert: {
           bartender_name: string
           card_actual?: number
+          card_credit_actual?: number
+          card_credit_expected?: number
+          card_debit_actual?: number
+          card_debit_expected?: number
           card_expected?: number
           cash_actual?: number
           cash_expected?: number
@@ -65,6 +74,7 @@ export type Database = {
           created_at?: string
           id?: string
           observations?: string | null
+          payment_methods_used?: Json | null
           pix_actual?: number
           pix_expected?: number
           total_difference?: number
@@ -74,6 +84,10 @@ export type Database = {
         Update: {
           bartender_name?: string
           card_actual?: number
+          card_credit_actual?: number
+          card_credit_expected?: number
+          card_debit_actual?: number
+          card_debit_expected?: number
           card_expected?: number
           cash_actual?: number
           cash_expected?: number
@@ -81,6 +95,7 @@ export type Database = {
           created_at?: string
           id?: string
           observations?: string | null
+          payment_methods_used?: Json | null
           pix_actual?: number
           pix_expected?: number
           total_difference?: number
