@@ -227,7 +227,6 @@ export type Database = {
           closed_at: string | null
           created_at: string
           id: string
-          payment_method: string | null
           status: string
           table_id: string
           total_cost: number | null
@@ -238,7 +237,6 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           id?: string
-          payment_method?: string | null
           status?: string
           table_id: string
           total_cost?: number | null
@@ -249,7 +247,6 @@ export type Database = {
           closed_at?: string | null
           created_at?: string
           id?: string
-          payment_method?: string | null
           status?: string
           table_id?: string
           total_cost?: number | null
