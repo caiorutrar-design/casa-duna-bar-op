@@ -20,24 +20,21 @@ export type Database = {
           created_at: string | null
           id: string
           name: string
-          pin: string
-          pin_hash: string | null
+          pin_hash: string
         }
         Insert: {
           active?: boolean | null
           created_at?: string | null
           id?: string
           name: string
-          pin: string
-          pin_hash?: string | null
+          pin_hash: string
         }
         Update: {
           active?: boolean | null
           created_at?: string | null
           id?: string
           name?: string
-          pin?: string
-          pin_hash?: string | null
+          pin_hash?: string
         }
         Relationships: []
       }
