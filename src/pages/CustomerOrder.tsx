@@ -22,9 +22,6 @@ interface Order {
   id: string;
   status: string;
   created_at: string;
-  tables: {
-    table_number: number;
-  };
 }
 
 export default function CustomerOrder() {
@@ -39,7 +36,7 @@ export default function CustomerOrder() {
     if (tableNumber) {
       fetchOrder();
       
-      // Set up realtime subscription
+      // Set up realtime subscription for order item changes
       const channel = supabase
         .channel('order-changes')
         .on(
@@ -66,73 +63,18 @@ export default function CustomerOrder() {
 
     setLoading(true);
     try {
-      // Get table
-      const { data: table, error: tableError } = await supabase
-        .from("tables")
-        .select("id")
-        .eq("table_number", parseInt(tableNumber))
-        .single();
+      const { data, error } = await supabase.functions.invoke("customer-order", {
+        body: { tableNumber },
+      });
 
-      if (tableError) throw tableError;
+      if (error) throw error;
 
-      // Get open order for table
-      const { data: orderData, error: orderError } = await supabase
-        .from("orders")
-        .select("*, tables(table_number)")
-        .eq("table_id", table.id)
-        .eq("status", "open")
-        .maybeSingle();
-
-      if (orderError && orderError.code !== 'PGRST116') throw orderError;
-
-      setOrder(orderData);
-
-      if (orderData) {
-        // Get order items
-        const { data: items, error: itemsError } = await supabase
-          .from("order_items")
-          .select("*, drinks(*)")
-          .eq("order_id", orderData.id);
-
-        if (itemsError) throw itemsError;
-        setOrderItems(items || []);
-      } else {
-        setOrderItems([]);
-      }
+      setOrder(data?.order || null);
+      setOrderItems(data?.items || []);
     } catch (error) {
       console.error("Error fetching order:", error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-500';
-      case 'preparing':
-        return 'bg-blue-500';
-      case 'ready':
-        return 'bg-green-500';
-      case 'delivered':
-        return 'bg-gray-500';
-      default:
-        return 'bg-gray-500';
-    }
-  };
-
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'Pendente';
-      case 'preparing':
-        return 'Preparando';
-      case 'ready':
-        return 'Pronto';
-      case 'delivered':
-        return 'Entregue';
-      default:
-        return status;
     }
   };
 
