@@ -21,6 +21,7 @@ export type Database = {
           id: string
           name: string
           pin: string
+          pin_hash: string | null
         }
         Insert: {
           active?: boolean | null
@@ -28,6 +29,7 @@ export type Database = {
           id?: string
           name: string
           pin: string
+          pin_hash?: string | null
         }
         Update: {
           active?: boolean | null
@@ -35,6 +37,7 @@ export type Database = {
           id?: string
           name?: string
           pin?: string
+          pin_hash?: string | null
         }
         Relationships: []
       }
@@ -265,6 +268,27 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          bartender_name: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          bartender_name: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          bartender_name?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       recipes: {
         Row: {
           created_at: string | null
@@ -419,6 +443,10 @@ export type Database = {
       update_ingredient_stock: {
         Args: { p_ingredient_id: string; p_quantity: number }
         Returns: undefined
+      }
+      verify_bartender_pin: {
+        Args: { p_name: string; p_pin: string }
+        Returns: Json
       }
     }
     Enums: {
