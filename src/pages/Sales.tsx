@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Plus, X, Check, ArrowLeft, Send } from "lucide-react";
+import { Users, Plus, X, Check, ArrowLeft, Send, CreditCard, Banknote, Smartphone } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -55,6 +55,7 @@ export default function Sales() {
   const [quantity, setQuantity] = useState("1");
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -206,7 +207,16 @@ export default function Sales() {
     }
   };
 
-  const closeOrder = async () => {
+  const handleCloseOrderClick = () => {
+    if (!currentOrder) return;
+    if (orderItems.length === 0) {
+      toast.error("Adicione itens à comanda antes de fechar");
+      return;
+    }
+    setShowPaymentDialog(true);
+  };
+
+  const closeOrder = async (paymentMethod: string) => {
     if (!currentOrder) return;
 
     const bartenderName = localStorage.getItem("bartender_name");
@@ -215,13 +225,15 @@ export default function Sales() {
       return;
     }
 
-    if (orderItems.length === 0) {
-      toast.error("Adicione itens à comanda antes de fechar");
-      return;
-    }
-
     setProcessing(true);
+    setShowPaymentDialog(false);
     try {
+      // Save payment method
+      await supabase
+        .from("orders")
+        .update({ payment_method: paymentMethod })
+        .eq("id", currentOrder.id);
+
       const { data, error } = await supabase.rpc("close_order", {
         p_order_id: currentOrder.id,
         p_bartender_name: bartenderName,
@@ -463,7 +475,7 @@ export default function Sales() {
               <div className="flex gap-2">
                 <Button 
                   className="flex-1" 
-                  onClick={closeOrder}
+                  onClick={handleCloseOrderClick}
                   disabled={processing || orderItems.length === 0}
                 >
                   <Check className="h-4 w-4 mr-2" />
@@ -494,6 +506,55 @@ export default function Sales() {
               </div>
             </ScrollArea>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Forma de Pagamento</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 gap-3 py-4">
+            <Button
+              variant="outline"
+              className="h-16 text-lg justify-start gap-4"
+              onClick={() => closeOrder("pix")}
+              disabled={processing}
+            >
+              <Smartphone className="h-6 w-6 text-primary" />
+              PIX
+            </Button>
+            <Button
+              variant="outline"
+              className="h-16 text-lg justify-start gap-4"
+              onClick={() => closeOrder("card_debit")}
+              disabled={processing}
+            >
+              <CreditCard className="h-6 w-6 text-primary" />
+              Cartão Débito
+            </Button>
+            <Button
+              variant="outline"
+              className="h-16 text-lg justify-start gap-4"
+              onClick={() => closeOrder("card_credit")}
+              disabled={processing}
+            >
+              <CreditCard className="h-6 w-6 text-primary" />
+              Cartão Crédito
+            </Button>
+            <Button
+              variant="outline"
+              className="h-16 text-lg justify-start gap-4"
+              onClick={() => closeOrder("cash")}
+              disabled={processing}
+            >
+              <Banknote className="h-6 w-6 text-primary" />
+              Dinheiro
+            </Button>
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            Total: <span className="font-bold text-foreground">R$ {getTotalCost().toFixed(2)}</span>
+          </p>
         </DialogContent>
       </Dialog>
     </Layout>
