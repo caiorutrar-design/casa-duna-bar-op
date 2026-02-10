@@ -140,6 +140,54 @@ export type Database = {
         }
         Relationships: []
       }
+      events: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          end_date: string
+          estimated_budget: number | null
+          event_type: Database["public"]["Enums"]["event_type"]
+          id: string
+          location: string | null
+          max_capacity: number | null
+          name: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date: string
+          estimated_budget?: number | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          location?: string | null
+          max_capacity?: number | null
+          name: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          end_date?: string
+          estimated_budget?: number | null
+          event_type?: Database["public"]["Enums"]["event_type"]
+          id?: string
+          location?: string | null
+          max_capacity?: number | null
+          name?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ingredients: {
         Row: {
           brand: string | null
@@ -477,6 +525,13 @@ export type Database = {
     }
     Enums: {
       app_role: "bartender" | "manager" | "admin"
+      event_type:
+        | "festa"
+        | "show"
+        | "happy_hour"
+        | "corporativo"
+        | "privado"
+        | "outro"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -605,6 +660,14 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["bartender", "manager", "admin"],
+      event_type: [
+        "festa",
+        "show",
+        "happy_hour",
+        "corporativo",
+        "privado",
+        "outro",
+      ],
     },
   },
 } as const
