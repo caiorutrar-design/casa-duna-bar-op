@@ -1,5 +1,6 @@
 import { NavLink } from "@/components/NavLink";
-import { Home, Package, TrendingUp, FileText, LogOut, Bell, DollarSign, BarChart3 } from "lucide-react";
+import { Home, Package, TrendingUp, FileText, LogOut, Bell, DollarSign, BarChart3, CalendarDays } from "lucide-react";
+import { useUserRole } from "@/hooks/use-user-role";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ interface LayoutProps {
 
 export const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
+  const { isManager } = useUserRole();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -54,7 +56,7 @@ export const Layout = ({ children }: LayoutProps) => {
       {/* Bottom Navigation */}
       <nav className="bg-card border-t border-border sticky bottom-0 shadow-strong">
         <div className="container mx-auto px-4">
-          <div className="grid grid-cols-7 gap-1 py-2">
+          <div className={`grid ${isManager ? 'grid-cols-8' : 'grid-cols-7'} gap-1 py-2`}>
             <NavLink
               to="/"
               className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
@@ -111,6 +113,16 @@ export const Layout = ({ children }: LayoutProps) => {
               <FileText className="h-5 w-5" />
               <span className="text-xs font-medium">Alertas</span>
             </NavLink>
+            {isManager && (
+              <NavLink
+                to="/events"
+                className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
+                activeClassName="text-primary bg-muted"
+              >
+                <CalendarDays className="h-5 w-5" />
+                <span className="text-xs font-medium">Eventos</span>
+              </NavLink>
+            )}
           </div>
         </div>
       </nav>

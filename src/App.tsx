@@ -14,6 +14,7 @@ import CustomerOrder from "./pages/CustomerOrder";
 import BarNotifications from "./pages/BarNotifications";
 import CashClosure from "./pages/CashClosure";
 import IncomeStatement from "./pages/IncomeStatement";
+import Events from "./pages/Events";
 import NotFound from "./pages/NotFound";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -113,6 +114,14 @@ const App = () => (
             element={
               <ProtectedRoute>
                 <IncomeStatement />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/events"
+            element={
+              <ProtectedRoute>
+                <Events />
               </ProtectedRoute>
             }
           />
