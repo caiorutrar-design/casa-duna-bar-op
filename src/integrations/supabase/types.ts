@@ -104,6 +104,206 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborator_categories: {
+        Row: {
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      collaborator_event_history: {
+        Row: {
+          collaborator_id: string
+          created_at: string
+          efficiency_metric: number | null
+          end_time: string | null
+          event_id: string
+          hours_worked: number | null
+          id: string
+          notes: string | null
+          performance_rating: number | null
+          start_time: string
+        }
+        Insert: {
+          collaborator_id: string
+          created_at?: string
+          efficiency_metric?: number | null
+          end_time?: string | null
+          event_id: string
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          performance_rating?: number | null
+          start_time: string
+        }
+        Update: {
+          collaborator_id?: string
+          created_at?: string
+          efficiency_metric?: number | null
+          end_time?: string | null
+          event_id?: string
+          hours_worked?: number | null
+          id?: string
+          notes?: string | null
+          performance_rating?: number | null
+          start_time?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_event_history_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_event_history_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collaborator_payments: {
+        Row: {
+          amount: number
+          collaborator_id: string
+          created_at: string
+          description: string | null
+          event_id: string | null
+          id: string
+          payment_date: string
+          payment_method: string | null
+        }
+        Insert: {
+          amount?: number
+          collaborator_id: string
+          created_at?: string
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          payment_date?: string
+          payment_method?: string | null
+        }
+        Update: {
+          amount?: number
+          collaborator_id?: string
+          created_at?: string
+          description?: string | null
+          event_id?: string | null
+          id?: string
+          payment_date?: string
+          payment_method?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborator_payments_collaborator_id_fkey"
+            columns: ["collaborator_id"]
+            isOneToOne: false
+            referencedRelation: "collaborators"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "collaborator_payments_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      collaborators: {
+        Row: {
+          active: boolean
+          address: string | null
+          admission_date: string | null
+          bank_account: string | null
+          bank_agency: string | null
+          bank_name: string | null
+          base_salary: number | null
+          category_id: string | null
+          contract_type: string | null
+          cpf: string | null
+          created_at: string
+          email: string | null
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string
+          id: string
+          phone: string | null
+          photo_url: string | null
+          pix_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          address?: string | null
+          admission_date?: string | null
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          base_salary?: number | null
+          category_id?: string | null
+          contract_type?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name: string
+          id?: string
+          phone?: string | null
+          photo_url?: string | null
+          pix_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          address?: string | null
+          admission_date?: string | null
+          bank_account?: string | null
+          bank_agency?: string | null
+          bank_name?: string | null
+          base_salary?: number | null
+          category_id?: string | null
+          contract_type?: string | null
+          cpf?: string | null
+          created_at?: string
+          email?: string | null
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string
+          id?: string
+          phone?: string | null
+          photo_url?: string | null
+          pix_key?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "collaborators_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "collaborator_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       drinks: {
         Row: {
           active: boolean | null
