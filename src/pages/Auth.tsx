@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,7 +13,31 @@ export default function Auth() {
   const [password, setPassword] = useState("");
   const [bartenderName, setBartenderName] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
   const navigate = useNavigate();
+
+  const handleResetPassword = async () => {
+    if (!resetEmail.trim()) {
+      toast.error("Digite seu email");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
+        redirectTo: window.location.origin,
+      });
+      if (error) throw error;
+      toast.success("Email de redefinição enviado! Verifique sua caixa de entrada.");
+      setResetOpen(false);
+      setResetEmail("");
+    } catch (error: any) {
+      toast.error("Erro ao enviar email de redefinição");
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -145,6 +170,13 @@ export default function Auth() {
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Entrando..." : "Entrar"}
                 </Button>
+                <button
+                  type="button"
+                  onClick={() => { setResetEmail(email); setResetOpen(true); }}
+                  className="w-full text-sm text-primary hover:underline mt-2"
+                >
+                  Esqueci minha senha
+                </button>
               </form>
             </TabsContent>
             <TabsContent value="signup">
@@ -196,6 +228,28 @@ export default function Auth() {
           </Tabs>
         </CardContent>
       </Card>
+
+      <Dialog open={resetOpen} onOpenChange={setResetOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Redefinir Senha</DialogTitle>
+            <DialogDescription>
+              Digite seu email para receber um link de redefinição de senha.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Input
+              type="email"
+              placeholder="Digite seu email"
+              value={resetEmail}
+              onChange={(e) => setResetEmail(e.target.value)}
+            />
+            <Button onClick={handleResetPassword} className="w-full" disabled={resetLoading}>
+              {resetLoading ? "Enviando..." : "Enviar Link"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
