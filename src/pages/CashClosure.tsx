@@ -8,9 +8,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { DollarSign, Calendar, User, TrendingDown, TrendingUp, CheckCircle, Clock } from "lucide-react";
+import { DollarSign, Calendar, User, TrendingDown, TrendingUp, CheckCircle, Clock, ShieldAlert } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useUserRole } from "@/hooks/use-user-role";
 
 interface DailySales {
   total: number;
@@ -27,6 +28,7 @@ interface PreviousClosure {
 }
 
 export default function CashClosure() {
+  const { isManager, loading: roleLoading } = useUserRole();
   const [dailySales, setDailySales] = useState<DailySales>({ total: 0, count: 0 });
   const [bartenderName, setBartenderName] = useState("");
   const [cashActual, setCashActual] = useState("");
@@ -168,12 +170,26 @@ export default function CashClosure() {
     }
   };
 
-  if (loading) {
+  if (loading || roleLoading) {
     return (
       <Layout>
         <div className="text-center py-12">
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
           <p className="text-muted-foreground mt-4">Carregando dados...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (!isManager) {
+    return (
+      <Layout>
+        <div className="text-center py-12">
+          <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground">Acesso Restrito</h2>
+          <p className="text-muted-foreground mt-2">
+            Apenas gerentes e administradores podem acessar o fechamento de caixa.
+          </p>
         </div>
       </Layout>
     );
