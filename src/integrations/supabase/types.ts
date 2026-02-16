@@ -578,6 +578,7 @@ export type Database = {
           bartender_name: string
           created_at: string | null
           drink_id: string
+          event_id: string | null
           id: string
           quantity: number
           total_cost: number | null
@@ -586,6 +587,7 @@ export type Database = {
           bartender_name: string
           created_at?: string | null
           drink_id: string
+          event_id?: string | null
           id?: string
           quantity?: number
           total_cost?: number | null
@@ -594,6 +596,7 @@ export type Database = {
           bartender_name?: string
           created_at?: string | null
           drink_id?: string
+          event_id?: string | null
           id?: string
           quantity?: number
           total_cost?: number | null
@@ -604,6 +607,13 @@ export type Database = {
             columns: ["drink_id"]
             isOneToOne: false
             referencedRelation: "drinks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
             referencedColumns: ["id"]
           },
         ]
@@ -697,6 +707,13 @@ export type Database = {
       close_order: {
         Args: { p_bartender_name: string; p_order_id: string }
         Returns: Json
+      }
+      has_any_role: {
+        Args: {
+          _roles: Database["public"]["Enums"]["app_role"][]
+          _user_id: string
+        }
+        Returns: boolean
       }
       has_role: {
         Args: {

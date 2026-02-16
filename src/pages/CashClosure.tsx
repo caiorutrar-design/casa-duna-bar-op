@@ -28,7 +28,7 @@ interface PreviousClosure {
 }
 
 export default function CashClosure() {
-  const { isManager, loading: roleLoading } = useUserRole();
+  const { canAccessPage, loading: roleLoading } = useUserRole();
   const [dailySales, setDailySales] = useState<DailySales>({ total: 0, count: 0 });
   const [bartenderName, setBartenderName] = useState("");
   const [cashActual, setCashActual] = useState("");
@@ -181,14 +181,14 @@ export default function CashClosure() {
     );
   }
 
-  if (!isManager) {
+  if (!canAccessPage("/cash-closure")) {
     return (
       <Layout>
         <div className="text-center py-12">
           <ShieldAlert className="h-12 w-12 text-destructive mx-auto mb-4" />
           <h2 className="text-xl font-bold text-foreground">Acesso Restrito</h2>
           <p className="text-muted-foreground mt-2">
-            Apenas gerentes e administradores podem acessar o fechamento de caixa.
+            Você não tem permissão para acessar o fechamento de caixa.
           </p>
         </div>
       </Layout>
