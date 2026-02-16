@@ -72,7 +72,7 @@ const emptyForm = {
 };
 
 const Collaborators = () => {
-  const { isManager, loading: roleLoading } = useUserRole();
+  const { canAccessPage, isManager, loading: roleLoading } = useUserRole();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -89,7 +89,7 @@ const Collaborators = () => {
       if (error) throw error;
       return data as CategoryRow[];
     },
-    enabled: isManager,
+    enabled: canAccessPage("/collaborators"),
   });
 
   const { data: collaborators = [], isLoading } = useQuery({
@@ -102,7 +102,7 @@ const Collaborators = () => {
       if (error) throw error;
       return data as CollaboratorRow[];
     },
-    enabled: isManager,
+    enabled: canAccessPage("/collaborators"),
   });
 
   const saveMutation = useMutation({
@@ -206,8 +206,8 @@ const Collaborators = () => {
     return <Layout><div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div></Layout>;
   }
 
-  if (!isManager) {
-    return <Layout><div className="text-center py-20 text-muted-foreground">Acesso restrito a gerentes e administradores.</div></Layout>;
+  if (!canAccessPage("/collaborators")) {
+    return <Layout><div className="text-center py-20 text-muted-foreground">Acesso restrito.</div></Layout>;
   }
 
   if (selectedCollaborator && selectedTab === "history") {

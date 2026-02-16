@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { Home, Package, TrendingUp, FileText, LogOut, Bell, DollarSign, BarChart3, CalendarDays, Users } from "lucide-react";
+import { Home, Package, TrendingUp, FileText, LogOut, Bell, DollarSign, BarChart3, CalendarDays, Users, PackageMinus } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -9,9 +9,22 @@ interface LayoutProps {
   children: React.ReactNode;
 }
 
+const NAV_ITEMS = [
+  { to: "/", icon: Home, label: "Vendas", path: "/" },
+  { to: "/stock", icon: Package, label: "Estoque", path: "/stock" },
+  { to: "/entry", icon: TrendingUp, label: "Entrada", path: "/entry" },
+  { to: "/bar", icon: Bell, label: "Bar", path: "/bar" },
+  { to: "/cash-closure", icon: DollarSign, label: "Caixa", path: "/cash-closure" },
+  { to: "/dre", icon: BarChart3, label: "DRE", path: "/dre" },
+  { to: "/reports", icon: FileText, label: "Alertas", path: "/reports" },
+  { to: "/stock-withdrawal", icon: PackageMinus, label: "Retirada", path: "/stock-withdrawal" },
+  { to: "/events", icon: CalendarDays, label: "Eventos", path: "/events" },
+  { to: "/collaborators", icon: Users, label: "Equipe", path: "/collaborators" },
+];
+
 export const Layout = ({ children }: LayoutProps) => {
   const navigate = useNavigate();
-  const { isManager } = useUserRole();
+  const { canAccessPage, isAdmin } = useUserRole();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -20,6 +33,12 @@ export const Layout = ({ children }: LayoutProps) => {
   };
 
   const bartenderName = localStorage.getItem("bartender_name");
+
+  // DRE is admin-only
+  const visibleItems = NAV_ITEMS.filter((item) => {
+    if (item.path === "/dre") return isAdmin;
+    return canAccessPage(item.path);
+  });
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -56,83 +75,21 @@ export const Layout = ({ children }: LayoutProps) => {
       {/* Bottom Navigation */}
       <nav className="bg-card border-t border-border sticky bottom-0 shadow-strong">
         <div className="container mx-auto px-4">
-          <div className={`grid ${isManager ? 'grid-cols-9' : 'grid-cols-7'} gap-1 py-2`}>
-            <NavLink
-              to="/"
-              className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-              activeClassName="text-primary bg-muted"
-            >
-              <Home className="h-5 w-5" />
-              <span className="text-xs font-medium">Vendas</span>
-            </NavLink>
-            <NavLink
-              to="/stock"
-              className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-              activeClassName="text-primary bg-muted"
-            >
-              <Package className="h-5 w-5" />
-              <span className="text-xs font-medium">Estoque</span>
-            </NavLink>
-            <NavLink
-              to="/entry"
-              className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-              activeClassName="text-primary bg-muted"
-            >
-              <TrendingUp className="h-5 w-5" />
-              <span className="text-xs font-medium">Entrada</span>
-            </NavLink>
-            <NavLink
-              to="/bar"
-              className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-              activeClassName="text-primary bg-muted"
-            >
-              <Bell className="h-5 w-5" />
-              <span className="text-xs font-medium">Bar</span>
-            </NavLink>
-            <NavLink
-              to="/cash-closure"
-              className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-              activeClassName="text-primary bg-muted"
-            >
-              <DollarSign className="h-5 w-5" />
-              <span className="text-xs font-medium">Caixa</span>
-            </NavLink>
-            <NavLink
-              to="/dre"
-              className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-              activeClassName="text-primary bg-muted"
-            >
-              <BarChart3 className="h-5 w-5" />
-              <span className="text-xs font-medium">DRE</span>
-            </NavLink>
-            <NavLink
-              to="/reports"
-              className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-              activeClassName="text-primary bg-muted"
-            >
-              <FileText className="h-5 w-5" />
-              <span className="text-xs font-medium">Alertas</span>
-            </NavLink>
-            {isManager && (
-              <>
-                <NavLink
-                  to="/events"
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-                  activeClassName="text-primary bg-muted"
-                >
-                  <CalendarDays className="h-5 w-5" />
-                  <span className="text-xs font-medium">Eventos</span>
-                </NavLink>
-                <NavLink
-                  to="/collaborators"
-                  className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors"
-                  activeClassName="text-primary bg-muted"
-                >
-                  <Users className="h-5 w-5" />
-                  <span className="text-xs font-medium">Equipe</span>
-                </NavLink>
-              </>
-            )}
+          <div
+            className="flex overflow-x-auto gap-1 py-2"
+            style={{ scrollbarWidth: "none" }}
+          >
+            {visibleItems.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className="flex flex-col items-center gap-1 p-2 rounded-lg text-muted-foreground hover:text-primary hover:bg-muted transition-colors min-w-[60px]"
+                activeClassName="text-primary bg-muted"
+              >
+                <item.icon className="h-5 w-5" />
+                <span className="text-xs font-medium whitespace-nowrap">{item.label}</span>
+              </NavLink>
+            ))}
           </div>
         </div>
       </nav>

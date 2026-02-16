@@ -13,8 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Plus, Pencil, Trash2, CalendarDays, MapPin, Users, DollarSign } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Pencil, Trash2, CalendarDays, MapPin, Users, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 type EventType = "festa" | "show" | "happy_hour" | "corporativo" | "privado" | "outro";
@@ -68,12 +68,16 @@ const emptyForm = {
   status: "planned",
 };
 
+const WEEKDAYS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
 const Events = () => {
-  const { isManager, loading: roleLoading } = useUserRole();
+  const { canAccessPage, loading: roleLoading } = useUserRole();
   const queryClient = useQueryClient();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
+  const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["events"],
@@ -85,7 +89,7 @@ const Events = () => {
       if (error) throw error;
       return data as EventRow[];
     },
-    enabled: isManager,
+    enabled: canAccessPage("/events"),
   });
 
   const saveMutation = useMutation({
@@ -101,7 +105,6 @@ const Events = () => {
         end_date: values.end_date,
         status: values.status,
       };
-
       if (editingId) {
         const { error } = await supabase.from("events").update(payload).eq("id", editingId);
         if (error) throw error;
@@ -159,20 +162,27 @@ const Events = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) {
-      toast({ title: "Nome é obrigatório", variant: "destructive" });
-      return;
-    }
-    if (!form.start_date || !form.end_date) {
-      toast({ title: "Datas de início e fim são obrigatórias", variant: "destructive" });
-      return;
-    }
-    if (new Date(form.end_date) <= new Date(form.start_date)) {
-      toast({ title: "A data de fim deve ser posterior à data de início", variant: "destructive" });
-      return;
-    }
+    if (!form.name.trim()) { toast({ title: "Nome é obrigatório", variant: "destructive" }); return; }
+    if (!form.start_date || !form.end_date) { toast({ title: "Datas são obrigatórias", variant: "destructive" }); return; }
+    if (new Date(form.end_date) <= new Date(form.start_date)) { toast({ title: "Data fim deve ser posterior ao início", variant: "destructive" }); return; }
     saveMutation.mutate(form);
   };
+
+  // Calendar helpers
+  const monthStart = startOfMonth(currentMonth);
+  const monthEnd = endOfMonth(currentMonth);
+  const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const startDayOfWeek = getDay(monthStart);
+
+  const getEventsForDay = (day: Date) => {
+    return events.filter((ev) => {
+      const start = new Date(ev.start_date);
+      const end = new Date(ev.end_date);
+      return day >= new Date(start.toDateString()) && day <= new Date(end.toDateString());
+    });
+  };
+
+  const selectedDayEvents = selectedDay ? getEventsForDay(selectedDay) : [];
 
   if (roleLoading) {
     return (
@@ -184,12 +194,10 @@ const Events = () => {
     );
   }
 
-  if (!isManager) {
+  if (!canAccessPage("/events")) {
     return (
       <Layout>
-        <div className="text-center py-20 text-muted-foreground">
-          Acesso restrito a gerentes e administradores.
-        </div>
+        <div className="text-center py-20 text-muted-foreground">Acesso restrito.</div>
       </Layout>
     );
   }
@@ -283,87 +291,176 @@ const Events = () => {
           <div className="flex justify-center py-10">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
           </div>
-        ) : events.length === 0 ? (
-          <Card>
-            <CardContent className="py-10 text-center text-muted-foreground">
-              Nenhum evento cadastrado. Clique em "Novo Evento" para começar.
-            </CardContent>
-          </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2">
-            {events.map((ev) => (
-              <Card key={ev.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg">{ev.name}</CardTitle>
-                      <div className="flex gap-2 flex-wrap">
-                        <Badge variant="outline">{EVENT_TYPE_LABELS[ev.event_type]}</Badge>
-                        <Badge className={STATUS_COLORS[ev.status] || ""}>{STATUS_LABELS[ev.status] || ev.status}</Badge>
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button variant="ghost" size="icon" onClick={() => openEdit(ev)}>
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="ghost" size="icon" className="text-destructive">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Excluir evento?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Esta ação não pode ser desfeita. O evento "{ev.name}" será removido permanentemente.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => deleteMutation.mutate(ev.id)} className="bg-destructive text-destructive-foreground">
-                              Excluir
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-2 text-sm">
-                  {ev.description && <p className="text-muted-foreground">{ev.description}</p>}
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <CalendarDays className="h-4 w-4 shrink-0" />
-                    <span>
-                      {format(new Date(ev.start_date), "dd/MM/yyyy HH:mm", { locale: ptBR })} — {format(new Date(ev.end_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                    </span>
-                  </div>
-                  {ev.location && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <MapPin className="h-4 w-4 shrink-0" />
-                      <span>{ev.location}</span>
-                    </div>
-                  )}
-                  {ev.max_capacity && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <Users className="h-4 w-4 shrink-0" />
-                      <span>{ev.max_capacity} pessoas</span>
-                    </div>
-                  )}
-                  {ev.estimated_budget != null && ev.estimated_budget > 0 && (
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <DollarSign className="h-4 w-4 shrink-0" />
-                      <span>R$ {Number(ev.estimated_budget).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <>
+            {/* Calendar View */}
+            <Card>
+              <CardHeader className="pb-2">
+                <div className="flex items-center justify-between">
+                  <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                  <CardTitle className="text-lg capitalize">
+                    {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
+                  </CardTitle>
+                  <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
+                    <ChevronRight className="h-5 w-5" />
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-7 gap-1">
+                  {WEEKDAYS.map((d) => (
+                    <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>
+                  ))}
+                  {Array.from({ length: startDayOfWeek }).map((_, i) => (
+                    <div key={`empty-${i}`} />
+                  ))}
+                  {daysInMonth.map((day) => {
+                    const dayEvents = getEventsForDay(day);
+                    const isToday = isSameDay(day, new Date());
+                    const isSelected = selectedDay && isSameDay(day, selectedDay);
+                    return (
+                      <button
+                        key={day.toISOString()}
+                        onClick={() => setSelectedDay(isSelected ? null : day)}
+                        className={`relative p-1 min-h-[48px] rounded-lg text-sm transition-colors ${
+                          isSelected ? "bg-primary text-primary-foreground" :
+                          isToday ? "bg-accent text-accent-foreground" :
+                          "hover:bg-muted"
+                        }`}
+                      >
+                        <span className="block">{format(day, "d")}</span>
+                        {dayEvents.length > 0 && (
+                          <div className="flex justify-center gap-0.5 mt-0.5">
+                            {dayEvents.slice(0, 3).map((ev) => (
+                              <div
+                                key={ev.id}
+                                className={`w-1.5 h-1.5 rounded-full ${
+                                  ev.status === "completed" ? "bg-green-500" :
+                                  ev.status === "cancelled" ? "bg-red-500" :
+                                  ev.status === "in_progress" ? "bg-yellow-500" :
+                                  "bg-blue-500"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Selected day events */}
+            {selectedDay && (
+              <div className="space-y-3">
+                <h3 className="font-semibold text-foreground">
+                  Eventos em {format(selectedDay, "dd/MM/yyyy", { locale: ptBR })}
+                </h3>
+                {selectedDayEvents.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum evento nesta data.</p>
+                ) : (
+                  selectedDayEvents.map((ev) => (
+                    <EventCard key={ev.id} ev={ev} onEdit={openEdit} onDelete={(id) => deleteMutation.mutate(id)} />
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* All events list */}
+            {!selectedDay && (
+              events.length === 0 ? (
+                <Card>
+                  <CardContent className="py-10 text-center text-muted-foreground">
+                    Nenhum evento cadastrado. Clique em "Novo Evento" para começar.
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {events.map((ev) => (
+                    <EventCard key={ev.id} ev={ev} onEdit={openEdit} onDelete={(id) => deleteMutation.mutate(id)} />
+                  ))}
+                </div>
+              )
+            )}
+          </>
         )}
       </div>
     </Layout>
   );
 };
+
+function EventCard({ ev, onEdit, onDelete }: { ev: EventRow; onEdit: (ev: EventRow) => void; onDelete: (id: string) => void }) {
+  return (
+    <Card className="hover:shadow-md transition-shadow">
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-lg">{ev.name}</CardTitle>
+            <div className="flex gap-2 flex-wrap">
+              <Badge variant="outline">{EVENT_TYPE_LABELS[ev.event_type]}</Badge>
+              <Badge className={STATUS_COLORS[ev.status] || ""}>{STATUS_LABELS[ev.status] || ev.status}</Badge>
+            </div>
+          </div>
+          <div className="flex gap-1">
+            <Button variant="ghost" size="icon" onClick={() => onEdit(ev)}>
+              <Pencil className="h-4 w-4" />
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="ghost" size="icon" className="text-destructive">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Excluir evento?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Esta ação não pode ser desfeita. O evento "{ev.name}" será removido permanentemente.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                  <AlertDialogAction onClick={() => onDelete(ev.id)} className="bg-destructive text-destructive-foreground">
+                    Excluir
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-2 text-sm">
+        {ev.description && <p className="text-muted-foreground">{ev.description}</p>}
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <CalendarDays className="h-4 w-4 shrink-0" />
+          <span>
+            {format(new Date(ev.start_date), "dd/MM/yyyy HH:mm", { locale: ptBR })} — {format(new Date(ev.end_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+          </span>
+        </div>
+        {ev.location && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <MapPin className="h-4 w-4 shrink-0" />
+            <span>{ev.location}</span>
+          </div>
+        )}
+        {ev.max_capacity && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Users className="h-4 w-4 shrink-0" />
+            <span>{ev.max_capacity} pessoas</span>
+          </div>
+        )}
+        {ev.estimated_budget != null && ev.estimated_budget > 0 && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <DollarSign className="h-4 w-4 shrink-0" />
+            <span>R$ {Number(ev.estimated_budget).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
 
 export default Events;

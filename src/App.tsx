@@ -16,6 +16,7 @@ import CashClosure from "./pages/CashClosure";
 import IncomeStatement from "./pages/IncomeStatement";
 import Events from "./pages/Events";
 import Collaborators from "./pages/Collaborators";
+import StockWithdrawal from "./pages/StockWithdrawal";
 import NotFound from "./pages/NotFound";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -62,79 +63,25 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/comanda" element={<CustomerOrder />} />
-          <Route
-            path="/"
-            element={
-              <ProtectedRoute>
-                <Sales />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/stock"
-            element={
-              <ProtectedRoute>
-                <Stock />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/entry"
-            element={
-              <ProtectedRoute>
-                <Entry />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/reports"
-            element={
-              <ProtectedRoute>
-                <Reports />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/bar"
-            element={
-              <ProtectedRoute>
-                <BarNotifications />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/cash-closure"
-            element={
-              <ProtectedRoute>
-                <CashClosure />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/dre"
-            element={
-              <ProtectedRoute>
-                <IncomeStatement />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/events"
-            element={
-              <ProtectedRoute>
-                <Events />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/collaborators"
-            element={
-              <ProtectedRoute>
-                <Collaborators />
-              </ProtectedRoute>
-            }
-          />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          {/* All protected routes - access control handled by each page via useUserRole */}
+          {[
+            { path: "/", element: <Sales /> },
+            { path: "/stock", element: <Stock /> },
+            { path: "/entry", element: <Entry /> },
+            { path: "/reports", element: <Reports /> },
+            { path: "/bar", element: <BarNotifications /> },
+            { path: "/cash-closure", element: <CashClosure /> },
+            { path: "/dre", element: <IncomeStatement /> },
+            { path: "/events", element: <Events /> },
+            { path: "/collaborators", element: <Collaborators /> },
+            { path: "/stock-withdrawal", element: <StockWithdrawal /> },
+          ].map(({ path, element }) => (
+            <Route
+              key={path}
+              path={path}
+              element={<ProtectedRoute>{element}</ProtectedRoute>}
+            />
+          ))}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
