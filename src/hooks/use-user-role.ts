@@ -6,9 +6,9 @@ export type AppRole = "bartender" | "manager" | "admin" | "garcom" | "barman" | 
 // Page access mapping per role
 const ROLE_PAGES: Record<AppRole, string[]> = {
   admin: ["all"],
-  manager: ["/", "/stock", "/entry", "/cash-closure", "/reports"],
-  garcom: ["/", "/bar", "/cash-closure", "/reports"],
-  bartender: ["/", "/bar", "/cash-closure", "/reports"], // legacy, same as garcom
+  manager: ["/sales", "/stock", "/entry", "/cash-closure", "/reports"],
+  garcom: ["/sales", "/bar", "/cash-closure", "/reports"],
+  bartender: ["/sales", "/bar", "/cash-closure", "/reports"],
   barman: ["/bar", "/stock-withdrawal", "/stock", "/reports"],
   usuario: ["/events", "/collaborators", "/reports", "/audit"],
 };
