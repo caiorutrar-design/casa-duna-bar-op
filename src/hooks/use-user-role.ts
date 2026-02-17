@@ -10,7 +10,7 @@ const ROLE_PAGES: Record<AppRole, string[]> = {
   garcom: ["/", "/bar", "/cash-closure", "/reports"],
   bartender: ["/", "/bar", "/cash-closure", "/reports"], // legacy, same as garcom
   barman: ["/bar", "/stock-withdrawal", "/stock", "/reports"],
-  usuario: ["/events", "/collaborators", "/reports"],
+  usuario: ["/events", "/collaborators", "/reports", "/audit"],
 };
 
 export function useUserRole() {

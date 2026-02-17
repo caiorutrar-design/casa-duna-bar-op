@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { logAuditAction } from "@/hooks/use-audit-log";
 import { lovable } from "@/integrations/lovable/index";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
@@ -77,6 +78,7 @@ export default function Auth() {
           .single();
         const name = profile?.bartender_name || email;
         localStorage.setItem("bartender_name", name);
+        await logAuditAction("login", "auth", { method: "email" });
         toast.success(`Bem-vindo, ${name}!`);
         navigate("/");
       }

@@ -17,6 +17,7 @@ import IncomeStatement from "./pages/IncomeStatement";
 import Events from "./pages/Events";
 import Collaborators from "./pages/Collaborators";
 import StockWithdrawal from "./pages/StockWithdrawal";
+import AuditLogs from "./pages/AuditLogs";
 import NotFound from "./pages/NotFound";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -75,6 +76,7 @@ const App = () => (
             { path: "/events", element: <Events /> },
             { path: "/collaborators", element: <Collaborators /> },
             { path: "/stock-withdrawal", element: <StockWithdrawal /> },
+            { path: "/audit", element: <AuditLogs /> },
           ].map(({ path, element }) => (
             <Route
               key={path}
