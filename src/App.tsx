@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import Auth from "./pages/Auth";
+import HomePage from "./pages/HomePage";
 import Sales from "./pages/Sales";
 import Stock from "./pages/Stock";
 import Entry from "./pages/Entry";
@@ -64,9 +65,9 @@ const App = () => (
         <Routes>
           <Route path="/auth" element={<Auth />} />
           <Route path="/comanda" element={<CustomerOrder />} />
-          {/* All protected routes - access control handled by each page via useUserRole */}
           {[
-            { path: "/", element: <Sales /> },
+            { path: "/", element: <HomePage /> },
+            { path: "/sales", element: <Sales /> },
             { path: "/stock", element: <Stock /> },
             { path: "/entry", element: <Entry /> },
             { path: "/reports", element: <Reports /> },
