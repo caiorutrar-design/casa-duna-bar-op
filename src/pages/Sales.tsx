@@ -108,7 +108,7 @@ export default function Sales() {
           .from("tables")
           .update({ status: 'occupied' })
           .eq("id", table.id);
-        fetchData();
+        setTables(prev => prev.map(t => t.id === table.id ? { ...t, status: 'occupied' } : t));
       }
     } else {
       // Create new order
@@ -132,7 +132,7 @@ export default function Sales() {
         .from("tables")
         .update({ status: 'occupied' })
         .eq("id", table.id);
-      fetchData();
+      setTables(prev => prev.map(t => t.id === table.id ? { ...t, status: 'occupied' } : t));
     }
   };
 

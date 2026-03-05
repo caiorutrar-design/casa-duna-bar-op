@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ArrowLeft, Plus, CalendarDays, Clock, Star } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -68,19 +68,19 @@ export function CollaboratorHistory({ collaborator, onBack }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborator-history", collaborator.id] });
-      toast({ title: "Histórico registrado!" });
+      toast.success("Histórico registrado!");
       setDialogOpen(false);
       setForm({ event_id: "", start_time: "", end_time: "", performance_rating: "", efficiency_metric: "", notes: "" });
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.event_id || !form.start_time) {
-      toast({ title: "Evento e horário de início são obrigatórios", variant: "destructive" });
+      toast.error("Evento e horário de início são obrigatórios");
       return;
     }
     saveMutation.mutate(form);

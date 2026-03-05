@@ -77,7 +77,6 @@ export default function Auth() {
           .eq("user_id", data.user.id)
           .single();
         const name = profile?.bartender_name || email;
-        localStorage.setItem("bartender_name", name);
         await logAuditAction("login", "auth", { method: "email" });
         toast.success(`Bem-vindo, ${name}!`);
         navigate("/");

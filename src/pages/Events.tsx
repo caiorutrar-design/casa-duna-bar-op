@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Plus, Pencil, Trash2, CalendarDays, MapPin, Users, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -116,11 +116,11 @@ const Events = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      toast({ title: editingId ? "Evento atualizado!" : "Evento criado!" });
+      toast.success(editingId ? "Evento atualizado!" : "Evento criado!");
       closeDialog();
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
@@ -131,10 +131,10 @@ const Events = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      toast({ title: "Evento excluído!" });
+      toast.success("Evento excluído!");
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
@@ -162,9 +162,9 @@ const Events = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) { toast({ title: "Nome é obrigatório", variant: "destructive" }); return; }
-    if (!form.start_date || !form.end_date) { toast({ title: "Datas são obrigatórias", variant: "destructive" }); return; }
-    if (new Date(form.end_date) <= new Date(form.start_date)) { toast({ title: "Data fim deve ser posterior ao início", variant: "destructive" }); return; }
+    if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
+    if (!form.start_date || !form.end_date) { toast.error("Datas são obrigatórias"); return; }
+    if (new Date(form.end_date) <= new Date(form.start_date)) { toast.error("Data fim deve ser posterior ao início"); return; }
     saveMutation.mutate(form);
   };
 

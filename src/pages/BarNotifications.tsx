@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Layout } from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -32,12 +32,7 @@ export default function BarNotifications() {
   const [preparingItems, setPreparingItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchOrders();
-    setupRealtimeSubscription();
-  }, []);
-
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
     try {
       const { data, error } = await supabase
         .from("order_items")
@@ -65,9 +60,11 @@ export default function BarNotifications() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const setupRealtimeSubscription = () => {
+  useEffect(() => {
+    fetchOrders();
+
     const channel = supabase
       .channel("bar-notifications")
       .on(
@@ -78,9 +75,6 @@ export default function BarNotifications() {
           table: "order_items",
         },
         async (payload) => {
-          console.log("New order item:", payload);
-          
-          // Fetch the complete item with relations
           const { data, error } = await supabase
             .from("order_items")
             .select(`
@@ -95,7 +89,6 @@ export default function BarNotifications() {
             .single();
 
           if (!error && data) {
-            // Show notification
             const tableNumber = data.orders.tables.table_number;
             toast.success(
               `🔔 Novo pedido - Mesa ${tableNumber}`,
@@ -105,12 +98,14 @@ export default function BarNotifications() {
               }
             );
 
-            // Play notification sound (optional)
             const audio = new Audio("/notification.mp3");
             audio.play().catch(() => console.log("Audio play failed"));
 
-            // Refresh the list
-            fetchOrders();
+            if (data.status === "pending") {
+              setPendingItems(prev => [...prev, data]);
+            } else if (data.status === "preparing") {
+              setPreparingItems(prev => [...prev, data]);
+            }
           }
         }
       )
@@ -121,9 +116,22 @@ export default function BarNotifications() {
           schema: "public",
           table: "order_items",
         },
-        () => {
-          // Refresh when status changes
-          fetchOrders();
+        (payload) => {
+          const updated = payload.new as { id: string; status: string };
+          
+          if (updated.status === "ready" || updated.status === "delivered") {
+            setPendingItems(prev => prev.filter(i => i.id !== updated.id));
+            setPreparingItems(prev => prev.filter(i => i.id !== updated.id));
+          } else if (updated.status === "preparing") {
+            setPendingItems(prev => {
+              const item = prev.find(i => i.id === updated.id);
+              if (item) {
+                setPreparingItems(p => [...p, { ...item, status: "preparing" }]);
+                return prev.filter(i => i.id !== updated.id);
+              }
+              return prev;
+            });
+          }
         }
       )
       .subscribe();
@@ -131,7 +139,7 @@ export default function BarNotifications() {
     return () => {
       supabase.removeChannel(channel);
     };
-  };
+  }, [fetchOrders]);
 
   const updateItemStatus = async (itemId: string, newStatus: string) => {
     try {
@@ -149,8 +157,6 @@ export default function BarNotifications() {
           ? "Item pronto para entrega"
           : "Status atualizado"
       );
-
-      fetchOrders();
     } catch (error) {
       console.error("Error updating status:", error);
       toast.error("Erro ao atualizar status");

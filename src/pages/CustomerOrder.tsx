@@ -32,32 +32,6 @@ export default function CustomerOrder() {
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (tableNumber) {
-      fetchOrder();
-      
-      // Set up realtime subscription for order item changes
-      const channel = supabase
-        .channel('order-changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'order_items'
-          },
-          () => {
-            fetchOrder();
-          }
-        )
-        .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
-    }
-  }, [tableNumber]);
-
   const fetchOrder = async () => {
     if (!tableNumber) return;
 
@@ -77,6 +51,48 @@ export default function CustomerOrder() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!tableNumber) return;
+    
+    fetchOrder();
+  }, [tableNumber]);
+
+  // Separate effect for realtime - only subscribe once we have an order
+  useEffect(() => {
+    if (!order?.id) return;
+
+    const channel = supabase
+      .channel(`order-${order.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'order_items',
+          filter: `order_id=eq.${order.id}`,
+        },
+        (payload) => {
+          if (payload.eventType === 'UPDATE') {
+            setOrderItems(prev =>
+              prev.map(item =>
+                item.id === payload.new.id
+                  ? { ...item, status: payload.new.status, quantity: payload.new.quantity }
+                  : item
+              )
+            );
+          } else {
+            // For INSERT/DELETE, refetch
+            fetchOrder();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [order?.id]);
 
   const getTotalCost = () => {
     return orderItems.reduce((sum, item) => sum + (item.unit_cost * item.quantity), 0);

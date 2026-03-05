@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { Plus, Pencil, Trash2, User, Phone, Mail, Eye, EyeOff, Search, History, DollarSign } from "lucide-react";
 import { maskCPF, maskPhone, maskPix, maskBankAccount, formatCPF, formatPhone, validateCPF } from "@/lib/masks";
 import { CollaboratorHistory } from "@/components/collaborators/CollaboratorHistory";
@@ -138,11 +138,11 @@ const Collaborators = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborators"] });
-      toast({ title: editingId ? "Colaborador atualizado!" : "Colaborador cadastrado!" });
+      toast.success(editingId ? "Colaborador atualizado!" : "Colaborador cadastrado!");
       closeDialog();
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
@@ -153,10 +153,10 @@ const Collaborators = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborators"] });
-      toast({ title: "Colaborador excluído!" });
+      toast.success("Colaborador excluído!");
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
@@ -191,7 +191,7 @@ const Collaborators = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim()) {
-      toast({ title: "Nome é obrigatório", variant: "destructive" });
+      toast.error("Nome é obrigatório");
       return;
     }
     saveMutation.mutate(form);

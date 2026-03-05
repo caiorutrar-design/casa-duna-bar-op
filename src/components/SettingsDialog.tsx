@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/hooks/use-theme";
 import { toast } from "sonner";
-import { LogOut, Moon, Sun, Lock, Globe } from "lucide-react";
+import { LogOut, Moon, Sun, Lock } from "lucide-react";
 
 interface SettingsDialogProps {
   open: boolean;
@@ -22,13 +22,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [changingPassword, setChangingPassword] = useState(false);
-  const [language, setLanguage] = useState<"pt" | "en">(
-    () => (localStorage.getItem("app_language") as "pt" | "en") || "pt"
-  );
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    localStorage.removeItem("bartender_name");
     navigate("/auth");
   };
 
@@ -55,12 +51,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
     }
   };
 
-  const handleLanguageChange = (lang: "pt" | "en") => {
-    setLanguage(lang);
-    localStorage.setItem("app_language", lang);
-    toast.success(lang === "pt" ? "Idioma alterado para Português" : "Language changed to English");
-  };
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-sm">
@@ -77,34 +67,6 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               <Label>Modo Noturno</Label>
             </div>
             <Switch checked={isDark} onCheckedChange={toggleTheme} />
-          </div>
-
-          <Separator />
-
-          {/* Language */}
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Globe className="h-4 w-4" />
-              <Label>Idioma</Label>
-            </div>
-            <div className="flex gap-2">
-              <Button
-                variant={language === "pt" ? "default" : "outline"}
-                size="sm"
-                className="flex-1"
-                onClick={() => handleLanguageChange("pt")}
-              >
-                Português
-              </Button>
-              <Button
-                variant={language === "en" ? "default" : "outline"}
-                size="sm"
-                className="flex-1"
-                onClick={() => handleLanguageChange("en")}
-              >
-                English
-              </Button>
-            </div>
           </div>
 
           <Separator />

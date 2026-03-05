@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { toast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { ArrowLeft, Plus, DollarSign, CalendarDays } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -74,19 +74,19 @@ export function CollaboratorPayments({ collaborator, onBack }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborator-payments", collaborator.id] });
-      toast({ title: "Pagamento registrado!" });
+      toast.success("Pagamento registrado!");
       setDialogOpen(false);
       setForm({ event_id: "", amount: "", payment_date: format(new Date(), "yyyy-MM-dd"), payment_method: "pix", description: "" });
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.amount || parseFloat(form.amount) <= 0) {
-      toast({ title: "Valor é obrigatório e deve ser positivo", variant: "destructive" });
+      toast.error("Valor é obrigatório e deve ser positivo");
       return;
     }
     saveMutation.mutate(form);

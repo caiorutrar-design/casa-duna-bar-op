@@ -1,8 +1,9 @@
 import { NavLink } from "@/components/NavLink";
 import { Home, Package, TrendingUp, FileText, Bell, DollarSign, BarChart3, CalendarDays, Users, PackageMinus, Shield } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { SettingsDialog } from "@/components/SettingsDialog";
+import { supabase } from "@/integrations/supabase/client";
 import dunaLogo from "@/assets/duna-logo.jpeg";
 
 const NAV_ITEMS = [
@@ -22,13 +23,27 @@ const NAV_ITEMS = [
 export default function HomePage() {
   const { canAccessPage, isAdmin } = useUserRole();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [bartenderName, setBartenderName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchName = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("bartender_name")
+          .eq("user_id", user.id)
+          .single();
+        setBartenderName(profile?.bartender_name || user.email || null);
+      }
+    };
+    fetchName();
+  }, []);
 
   const visibleItems = NAV_ITEMS.filter((item) => {
     if (item.path === "/dre" || item.path === "/audit") return isAdmin;
     return canAccessPage(item.path);
   });
-
-  const bartenderName = localStorage.getItem("bartender_name");
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
