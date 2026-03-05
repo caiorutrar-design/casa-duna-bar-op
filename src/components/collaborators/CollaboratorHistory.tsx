@@ -80,7 +80,7 @@ export function CollaboratorHistory({ collaborator, onBack }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.event_id || !form.start_time) {
-      toast({ title: "Evento e horário de início são obrigatórios", variant: "destructive" });
+      toast.error("Evento e horário de início são obrigatórios");
       return;
     }
     saveMutation.mutate(form);

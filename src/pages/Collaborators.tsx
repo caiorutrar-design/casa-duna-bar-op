@@ -191,7 +191,7 @@ const Collaborators = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.full_name.trim()) {
-      toast({ title: "Nome é obrigatório", variant: "destructive" });
+      toast.error("Nome é obrigatório");
       return;
     }
     saveMutation.mutate(form);

@@ -86,7 +86,7 @@ export function CollaboratorPayments({ collaborator, onBack }: Props) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!form.amount || parseFloat(form.amount) <= 0) {
-      toast({ title: "Valor é obrigatório e deve ser positivo", variant: "destructive" });
+      toast.error("Valor é obrigatório e deve ser positivo");
       return;
     }
     saveMutation.mutate(form);

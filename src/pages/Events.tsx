@@ -162,9 +162,9 @@ const Events = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.name.trim()) { toast({ title: "Nome é obrigatório", variant: "destructive" }); return; }
-    if (!form.start_date || !form.end_date) { toast({ title: "Datas são obrigatórias", variant: "destructive" }); return; }
-    if (new Date(form.end_date) <= new Date(form.start_date)) { toast({ title: "Data fim deve ser posterior ao início", variant: "destructive" }); return; }
+    if (!form.name.trim()) { toast.error("Nome é obrigatório"); return; }
+    if (!form.start_date || !form.end_date) { toast.error("Datas são obrigatórias"); return; }
+    if (new Date(form.end_date) <= new Date(form.start_date)) { toast.error("Data fim deve ser posterior ao início"); return; }
     saveMutation.mutate(form);
   };
 
