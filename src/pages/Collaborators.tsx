@@ -138,11 +138,11 @@ const Collaborators = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborators"] });
-      toast({ title: editingId ? "Colaborador atualizado!" : "Colaborador cadastrado!" });
+      toast.success(editingId ? "Colaborador atualizado!" : "Colaborador cadastrado!");
       closeDialog();
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
