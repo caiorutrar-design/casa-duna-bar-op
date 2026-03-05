@@ -68,12 +68,12 @@ export function CollaboratorHistory({ collaborator, onBack }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborator-history", collaborator.id] });
-      toast({ title: "Histórico registrado!" });
+      toast.success("Histórico registrado!");
       setDialogOpen(false);
       setForm({ event_id: "", start_time: "", end_time: "", performance_rating: "", efficiency_metric: "", notes: "" });
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
