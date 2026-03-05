@@ -31,6 +31,7 @@ export default function CashClosure() {
   const { canAccessPage, loading: roleLoading } = useUserRole();
   const [dailySales, setDailySales] = useState<DailySales>({ total: 0, count: 0 });
   const [bartenderName, setBartenderName] = useState("");
+  const [profileName, setProfileName] = useState("");
   const [cashActual, setCashActual] = useState("");
   const [cardActual, setCardActual] = useState("");
   const [pixActual, setPixActual] = useState("");
