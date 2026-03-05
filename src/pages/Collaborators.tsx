@@ -153,10 +153,10 @@ const Collaborators = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborators"] });
-      toast({ title: "Colaborador excluído!" });
+      toast.success("Colaborador excluído!");
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
