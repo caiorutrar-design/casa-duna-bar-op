@@ -131,10 +131,10 @@ const Events = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      toast({ title: "Evento excluído!" });
+      toast.success("Evento excluído!");
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
