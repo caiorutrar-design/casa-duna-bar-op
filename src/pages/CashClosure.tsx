@@ -298,9 +298,9 @@ export default function CashClosure() {
               <Input
                 id="bartender"
                 value={bartenderName}
-                onChange={(e) => setBartenderName(e.target.value)}
-                placeholder="Nome do bartender ou gerente"
-                disabled={alreadyClosed}
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed"
               />
             </div>
 
