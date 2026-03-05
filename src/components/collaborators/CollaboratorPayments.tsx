@@ -74,12 +74,12 @@ export function CollaboratorPayments({ collaborator, onBack }: Props) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["collaborator-payments", collaborator.id] });
-      toast({ title: "Pagamento registrado!" });
+      toast.success("Pagamento registrado!");
       setDialogOpen(false);
       setForm({ event_id: "", amount: "", payment_date: format(new Date(), "yyyy-MM-dd"), payment_method: "pix", description: "" });
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
