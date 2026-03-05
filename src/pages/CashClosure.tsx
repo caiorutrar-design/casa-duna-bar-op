@@ -31,6 +31,7 @@ export default function CashClosure() {
   const { canAccessPage, loading: roleLoading } = useUserRole();
   const [dailySales, setDailySales] = useState<DailySales>({ total: 0, count: 0 });
   const [bartenderName, setBartenderName] = useState("");
+  const [profileName, setProfileName] = useState("");
   const [cashActual, setCashActual] = useState("");
   const [cardActual, setCardActual] = useState("");
   const [pixActual, setPixActual] = useState("");
@@ -46,7 +47,25 @@ export default function CashClosure() {
     fetchDailySales();
     fetchPreviousClosures();
     checkIfAlreadyClosed();
+    fetchProfileName();
   }, []);
+
+  const fetchProfileName = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("bartender_name")
+        .eq("user_id", user.id)
+        .single();
+      const name = profile?.bartender_name || user.email || "";
+      setProfileName(name);
+      setBartenderName(name);
+    } catch (e) {
+      console.error("Error fetching profile:", e);
+    }
+  };
 
   const checkIfAlreadyClosed = async () => {
     try {
@@ -279,9 +298,9 @@ export default function CashClosure() {
               <Input
                 id="bartender"
                 value={bartenderName}
-                onChange={(e) => setBartenderName(e.target.value)}
-                placeholder="Nome do bartender ou gerente"
-                disabled={alreadyClosed}
+                readOnly
+                disabled
+                className="bg-muted cursor-not-allowed"
               />
             </div>
 

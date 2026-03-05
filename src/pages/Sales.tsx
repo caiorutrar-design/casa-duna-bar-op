@@ -219,9 +219,29 @@ export default function Sales() {
   const closeOrder = async (paymentMethod: string) => {
     if (!currentOrder) return;
 
-    const bartenderName = localStorage.getItem("bartender_name");
+    const VALID_METHODS = ["cash", "card_debit", "card_credit", "pix"];
+    if (!VALID_METHODS.includes(paymentMethod)) {
+      toast.error("Forma de pagamento inválida");
+      return;
+    }
+
+    // Fetch bartender name from authenticated user's profile instead of localStorage
+    let bartenderName: string | null = null;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("bartender_name")
+          .eq("user_id", user.id)
+          .single();
+        bartenderName = profile?.bartender_name || user.email || null;
+      }
+    } catch {
+      // fall through
+    }
     if (!bartenderName) {
-      toast.error("Bartender não identificado");
+      toast.error("Usuário não identificado. Faça login novamente.");
       return;
     }
 
