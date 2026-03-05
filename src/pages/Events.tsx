@@ -116,11 +116,11 @@ const Events = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
-      toast({ title: editingId ? "Evento atualizado!" : "Evento criado!" });
+      toast.success(editingId ? "Evento atualizado!" : "Evento criado!");
       closeDialog();
     },
     onError: (err: any) => {
-      toast({ title: "Erro", description: err.message, variant: "destructive" });
+      toast.error(`Erro: ${err.message}`);
     },
   });
 
