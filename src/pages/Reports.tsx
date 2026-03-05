@@ -30,9 +30,14 @@ export default function Reports() {
 
   const fetchReports = async () => {
     try {
+      // Default to last 30 days
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
       const { data: salesData, error: salesError } = await supabase
         .from("sales")
-        .select("total_cost, quantity");
+        .select("total_cost, quantity")
+        .gte("created_at", thirtyDaysAgo.toISOString());
 
       if (salesError) throw salesError;
 

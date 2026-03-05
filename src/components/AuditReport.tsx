@@ -1,33 +1,30 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { FileDown, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
+import { subDays, format } from "date-fns";
 
-interface AuditReportProps {
-  dateRange?: { start: Date; end: Date };
-}
+export function AuditReport() {
+  const defaultStart = format(subDays(new Date(), 30), "yyyy-MM-dd");
 
-export function AuditReport({ dateRange }: AuditReportProps) {
   const exportToCSV = async () => {
     try {
-      // Fetch sales data
       const { data: salesData } = await supabase
         .from("sales")
         .select("*, drinks(name)")
-        .order("created_at", { ascending: false });
+        .gte("created_at", `${defaultStart}T00:00:00`)
+        .order("created_at", { ascending: false })
+        .limit(500);
 
-      // Fetch stock data
       const { data: stockData } = await supabase
         .from("ingredients")
         .select("*")
         .order("name");
 
-      // Create CSV content
       let csvContent = "RELATÓRIO DE AUDITORIA\n\n";
       
-      csvContent += "VENDAS\n";
+      csvContent += "VENDAS (últimos 30 dias)\n";
       csvContent += "Data,Drink,Bartender,Quantidade,Valor Total\n";
       
       salesData?.forEach(sale => {
@@ -42,7 +39,6 @@ export function AuditReport({ dateRange }: AuditReportProps) {
         csvContent += `${item.name},${item.brand || 'N/A'},${item.current_stock},${item.min_stock},${item.unit},R$ ${item.cost_per_unit}\n`;
       });
 
-      // Download file
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const link = document.createElement("a");
       const url = URL.createObjectURL(blob);
@@ -65,7 +61,9 @@ export function AuditReport({ dateRange }: AuditReportProps) {
       const { data: salesData } = await supabase
         .from("sales")
         .select("*, drinks(name)")
-        .order("created_at", { ascending: false });
+        .gte("created_at", `${defaultStart}T00:00:00`)
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       const { data: stockData } = await supabase
         .from("ingredients")
@@ -80,6 +78,7 @@ export function AuditReport({ dateRange }: AuditReportProps) {
 
       const reportData = {
         generated_at: new Date().toISOString(),
+        period: `Últimos 30 dias (desde ${defaultStart})`,
         sales: salesData,
         stock: stockData,
         recent_movements: movementsData,
@@ -121,8 +120,7 @@ export function AuditReport({ dateRange }: AuditReportProps) {
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          Exporte relatórios completos de vendas e estoque para auditoria.
-          Os arquivos contêm dados detalhados de todas as transações e movimentações.
+          Exporte relatórios dos últimos 30 dias de vendas e estoque para auditoria.
         </p>
       </CardContent>
     </Card>
