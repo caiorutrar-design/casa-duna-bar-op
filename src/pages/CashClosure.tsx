@@ -47,7 +47,25 @@ export default function CashClosure() {
     fetchDailySales();
     fetchPreviousClosures();
     checkIfAlreadyClosed();
+    fetchProfileName();
   }, []);
+
+  const fetchProfileName = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("bartender_name")
+        .eq("user_id", user.id)
+        .single();
+      const name = profile?.bartender_name || user.email || "";
+      setProfileName(name);
+      setBartenderName(name);
+    } catch (e) {
+      console.error("Error fetching profile:", e);
+    }
+  };
 
   const checkIfAlreadyClosed = async () => {
     try {
