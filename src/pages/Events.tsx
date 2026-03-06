@@ -11,11 +11,13 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, CalendarDays, MapPin, Users, DollarSign, ChevronLeft, ChevronRight } from "lucide-react";
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, addMonths, subMonths, getDay } from "date-fns";
+import { Plus, Pencil, Trash2, CalendarDays, MapPin, Users, DollarSign, ChevronLeft, ChevronRight, ArrowLeft, Calculator } from "lucide-react";
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, addMonths, subMonths, getDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { EventFinancialPlanner } from "@/components/events/EventFinancialPlanner";
 
 type EventType = "festa" | "show" | "happy_hour" | "corporativo" | "privado" | "outro";
 
@@ -31,6 +33,12 @@ interface EventRow {
   end_date: string;
   status: string;
   created_at: string;
+  estimated_attendance: number | null;
+  average_ticket_price: number | null;
+  average_bar_spend_per_person: number | null;
+  estimated_sponsor_revenue: number | null;
+  estimated_vip_revenue: number | null;
+  estimated_other_revenue: number | null;
 }
 
 const EVENT_TYPE_LABELS: Record<EventType, string> = {
@@ -78,6 +86,7 @@ const Events = () => {
   const [form, setForm] = useState(emptyForm);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [selectedEvent, setSelectedEvent] = useState<EventRow | null>(null);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["events"],
@@ -119,9 +128,7 @@ const Events = () => {
       toast.success(editingId ? "Evento atualizado!" : "Evento criado!");
       closeDialog();
     },
-    onError: (err: any) => {
-      toast.error(`Erro: ${err.message}`);
-    },
+    onError: (err: any) => toast.error(`Erro: ${err.message}`),
   });
 
   const deleteMutation = useMutation({
@@ -133,16 +140,10 @@ const Events = () => {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       toast.success("Evento excluído!");
     },
-    onError: (err: any) => {
-      toast.error(`Erro: ${err.message}`);
-    },
+    onError: (err: any) => toast.error(`Erro: ${err.message}`),
   });
 
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditingId(null);
-    setForm(emptyForm);
-  };
+  const closeDialog = () => { setDialogOpen(false); setEditingId(null); setForm(emptyForm); };
 
   const openEdit = (ev: EventRow) => {
     setEditingId(ev.id);
@@ -168,36 +169,67 @@ const Events = () => {
     saveMutation.mutate(form);
   };
 
-  // Calendar helpers
   const monthStart = startOfMonth(currentMonth);
   const monthEnd = endOfMonth(currentMonth);
   const daysInMonth = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const startDayOfWeek = getDay(monthStart);
 
-  const getEventsForDay = (day: Date) => {
-    return events.filter((ev) => {
+  const getEventsForDay = (day: Date) =>
+    events.filter((ev) => {
       const start = new Date(ev.start_date);
       const end = new Date(ev.end_date);
       return day >= new Date(start.toDateString()) && day <= new Date(end.toDateString());
     });
-  };
 
   const selectedDayEvents = selectedDay ? getEventsForDay(selectedDay) : [];
 
   if (roleLoading) {
-    return (
-      <Layout>
-        <div className="flex items-center justify-center py-20">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-        </div>
-      </Layout>
-    );
+    return <Layout><div className="flex items-center justify-center py-20"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div></Layout>;
+  }
+  if (!canAccessPage("/events")) {
+    return <Layout><div className="text-center py-20 text-muted-foreground">Acesso restrito.</div></Layout>;
   }
 
-  if (!canAccessPage("/events")) {
+  // Detail view with tabs
+  if (selectedEvent) {
+    // Refresh event data from query cache
+    const freshEvent = events.find((e) => e.id === selectedEvent.id) || selectedEvent;
     return (
       <Layout>
-        <div className="text-center py-20 text-muted-foreground">Acesso restrito.</div>
+        <div className="space-y-4">
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => setSelectedEvent(null)}>
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h2 className="text-2xl font-bold text-foreground">{freshEvent.name}</h2>
+            <Badge className={STATUS_COLORS[freshEvent.status] || ""}>{STATUS_LABELS[freshEvent.status] || freshEvent.status}</Badge>
+          </div>
+
+          <Tabs defaultValue="details">
+            <TabsList>
+              <TabsTrigger value="details">Detalhes</TabsTrigger>
+              <TabsTrigger value="financial" className="flex items-center gap-1">
+                <Calculator className="h-3.5 w-3.5" /> Planejamento Financeiro
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="details">
+              <EventCard ev={freshEvent} onEdit={openEdit} onDelete={(id) => { deleteMutation.mutate(id); setSelectedEvent(null); }} />
+            </TabsContent>
+
+            <TabsContent value="financial">
+              <EventFinancialPlanner event={freshEvent} />
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Keep dialog accessible */}
+        <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); else setDialogOpen(true); }}>
+          <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader><DialogTitle>{editingId ? "Editar Evento" : "Criar Evento"}</DialogTitle></DialogHeader>
+            <EventForm form={form} setForm={setForm} onSubmit={handleSubmit} isPending={saveMutation.isPending} />
+          </DialogContent>
+        </Dialog>
       </Layout>
     );
   }
@@ -214,135 +246,41 @@ const Events = () => {
               </Button>
             </DialogTrigger>
             <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>{editingId ? "Editar Evento" : "Criar Evento"}</DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Nome *</Label>
-                  <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={100} required />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Tipo *</Label>
-                    <Select value={form.event_type} onValueChange={(v) => setForm({ ...form, event_type: v as EventType })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(EVENT_TYPE_LABELS).map(([k, v]) => (
-                          <SelectItem key={k} value={k}>{v}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {Object.entries(STATUS_LABELS).map(([k, v]) => (
-                          <SelectItem key={k} value={k}>{v}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Descrição</Label>
-                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={1000} rows={3} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Início *</Label>
-                    <Input type="datetime-local" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} required />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Fim *</Label>
-                    <Input type="datetime-local" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} required />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Local</Label>
-                  <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} maxLength={200} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Capacidade Máx.</Label>
-                    <Input type="number" min={0} value={form.max_capacity} onChange={(e) => setForm({ ...form, max_capacity: e.target.value })} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Orçamento (R$)</Label>
-                    <Input type="number" min={0} step="0.01" value={form.estimated_budget} onChange={(e) => setForm({ ...form, estimated_budget: e.target.value })} />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="outline" type="button">Cancelar</Button>
-                  </DialogClose>
-                  <Button type="submit" disabled={saveMutation.isPending}>
-                    {saveMutation.isPending ? "Salvando..." : "Salvar"}
-                  </Button>
-                </DialogFooter>
-              </form>
+              <DialogHeader><DialogTitle>{editingId ? "Editar Evento" : "Criar Evento"}</DialogTitle></DialogHeader>
+              <EventForm form={form} setForm={setForm} onSubmit={handleSubmit} isPending={saveMutation.isPending} />
             </DialogContent>
           </Dialog>
         </div>
 
         {isLoading ? (
-          <div className="flex justify-center py-10">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
+          <div className="flex justify-center py-10"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" /></div>
         ) : (
           <>
-            {/* Calendar View */}
+            {/* Calendar */}
             <Card>
               <CardHeader className="pb-2">
                 <div className="flex items-center justify-between">
-                  <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}>
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
-                  <CardTitle className="text-lg capitalize">
-                    {format(currentMonth, "MMMM yyyy", { locale: ptBR })}
-                  </CardTitle>
-                  <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}>
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
+                  <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}><ChevronLeft className="h-5 w-5" /></Button>
+                  <CardTitle className="text-lg capitalize">{format(currentMonth, "MMMM yyyy", { locale: ptBR })}</CardTitle>
+                  <Button variant="ghost" size="icon" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}><ChevronRight className="h-5 w-5" /></Button>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-7 gap-1">
-                  {WEEKDAYS.map((d) => (
-                    <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>
-                  ))}
-                  {Array.from({ length: startDayOfWeek }).map((_, i) => (
-                    <div key={`empty-${i}`} />
-                  ))}
+                  {WEEKDAYS.map((d) => <div key={d} className="text-center text-xs font-medium text-muted-foreground py-2">{d}</div>)}
+                  {Array.from({ length: startDayOfWeek }).map((_, i) => <div key={`empty-${i}`} />)}
                   {daysInMonth.map((day) => {
                     const dayEvents = getEventsForDay(day);
                     const isToday = isSameDay(day, new Date());
                     const isSelected = selectedDay && isSameDay(day, selectedDay);
                     return (
-                      <button
-                        key={day.toISOString()}
-                        onClick={() => setSelectedDay(isSelected ? null : day)}
-                        className={`relative p-1 min-h-[48px] rounded-lg text-sm transition-colors ${
-                          isSelected ? "bg-primary text-primary-foreground" :
-                          isToday ? "bg-accent text-accent-foreground" :
-                          "hover:bg-muted"
-                        }`}
-                      >
+                      <button key={day.toISOString()} onClick={() => setSelectedDay(isSelected ? null : day)}
+                        className={`relative p-1 min-h-[48px] rounded-lg text-sm transition-colors ${isSelected ? "bg-primary text-primary-foreground" : isToday ? "bg-accent text-accent-foreground" : "hover:bg-muted"}`}>
                         <span className="block">{format(day, "d")}</span>
                         {dayEvents.length > 0 && (
                           <div className="flex justify-center gap-0.5 mt-0.5">
                             {dayEvents.slice(0, 3).map((ev) => (
-                              <div
-                                key={ev.id}
-                                className={`w-1.5 h-1.5 rounded-full ${
-                                  ev.status === "completed" ? "bg-green-500" :
-                                  ev.status === "cancelled" ? "bg-red-500" :
-                                  ev.status === "in_progress" ? "bg-yellow-500" :
-                                  "bg-blue-500"
-                                }`}
-                              />
+                              <div key={ev.id} className={`w-1.5 h-1.5 rounded-full ${ev.status === "completed" ? "bg-green-500" : ev.status === "cancelled" ? "bg-red-500" : ev.status === "in_progress" ? "bg-yellow-500" : "bg-blue-500"}`} />
                             ))}
                           </div>
                         )}
@@ -356,32 +294,22 @@ const Events = () => {
             {/* Selected day events */}
             {selectedDay && (
               <div className="space-y-3">
-                <h3 className="font-semibold text-foreground">
-                  Eventos em {format(selectedDay, "dd/MM/yyyy", { locale: ptBR })}
-                </h3>
+                <h3 className="font-semibold text-foreground">Eventos em {format(selectedDay, "dd/MM/yyyy", { locale: ptBR })}</h3>
                 {selectedDayEvents.length === 0 ? (
                   <p className="text-sm text-muted-foreground">Nenhum evento nesta data.</p>
-                ) : (
-                  selectedDayEvents.map((ev) => (
-                    <EventCard key={ev.id} ev={ev} onEdit={openEdit} onDelete={(id) => deleteMutation.mutate(id)} />
-                  ))
-                )}
+                ) : selectedDayEvents.map((ev) => (
+                  <EventCard key={ev.id} ev={ev} onEdit={openEdit} onDelete={(id) => deleteMutation.mutate(id)} onSelect={setSelectedEvent} />
+                ))}
               </div>
             )}
 
-            {/* All events list */}
+            {/* All events */}
             {!selectedDay && (
               events.length === 0 ? (
-                <Card>
-                  <CardContent className="py-10 text-center text-muted-foreground">
-                    Nenhum evento cadastrado. Clique em "Novo Evento" para começar.
-                  </CardContent>
-                </Card>
+                <Card><CardContent className="py-10 text-center text-muted-foreground">Nenhum evento cadastrado. Clique em "Novo Evento" para começar.</CardContent></Card>
               ) : (
                 <div className="grid gap-4 md:grid-cols-2">
-                  {events.map((ev) => (
-                    <EventCard key={ev.id} ev={ev} onEdit={openEdit} onDelete={(id) => deleteMutation.mutate(id)} />
-                  ))}
+                  {events.map((ev) => <EventCard key={ev.id} ev={ev} onEdit={openEdit} onDelete={(id) => deleteMutation.mutate(id)} onSelect={setSelectedEvent} />)}
                 </div>
               )
             )}
@@ -392,9 +320,41 @@ const Events = () => {
   );
 };
 
-function EventCard({ ev, onEdit, onDelete }: { ev: EventRow; onEdit: (ev: EventRow) => void; onDelete: (id: string) => void }) {
+function EventForm({ form, setForm, onSubmit, isPending }: { form: any; setForm: (f: any) => void; onSubmit: (e: React.FormEvent) => void; isPending: boolean }) {
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <form onSubmit={onSubmit} className="space-y-4">
+      <div className="space-y-2"><Label>Nome *</Label><Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} maxLength={100} required /></div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label>Tipo *</Label>
+          <Select value={form.event_type} onValueChange={(v) => setForm({ ...form, event_type: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(EVENT_TYPE_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Status</Label>
+          <Select value={form.status} onValueChange={(v) => setForm({ ...form, status: v })}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{Object.entries(STATUS_LABELS).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}</SelectContent></Select>
+        </div>
+      </div>
+      <div className="space-y-2"><Label>Descrição</Label><Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} maxLength={1000} rows={3} /></div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2"><Label>Início *</Label><Input type="datetime-local" value={form.start_date} onChange={(e) => setForm({ ...form, start_date: e.target.value })} required /></div>
+        <div className="space-y-2"><Label>Fim *</Label><Input type="datetime-local" value={form.end_date} onChange={(e) => setForm({ ...form, end_date: e.target.value })} required /></div>
+      </div>
+      <div className="space-y-2"><Label>Local</Label><Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} maxLength={200} /></div>
+      <div className="grid grid-cols-2 gap-4">
+        <div className="space-y-2"><Label>Capacidade Máx.</Label><Input type="number" min={0} value={form.max_capacity} onChange={(e) => setForm({ ...form, max_capacity: e.target.value })} /></div>
+        <div className="space-y-2"><Label>Orçamento (R$)</Label><Input type="number" min={0} step="0.01" value={form.estimated_budget} onChange={(e) => setForm({ ...form, estimated_budget: e.target.value })} /></div>
+      </div>
+      <DialogFooter>
+        <DialogClose asChild><Button variant="outline" type="button">Cancelar</Button></DialogClose>
+        <Button type="submit" disabled={isPending}>{isPending ? "Salvando..." : "Salvar"}</Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+function EventCard({ ev, onEdit, onDelete, onSelect }: { ev: EventRow; onEdit: (ev: EventRow) => void; onDelete: (id: string) => void; onSelect?: (ev: EventRow) => void }) {
+  return (
+    <Card className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => onSelect?.(ev)}>
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="space-y-1">
@@ -404,28 +364,18 @@ function EventCard({ ev, onEdit, onDelete }: { ev: EventRow; onEdit: (ev: EventR
               <Badge className={STATUS_COLORS[ev.status] || ""}>{STATUS_LABELS[ev.status] || ev.status}</Badge>
             </div>
           </div>
-          <div className="flex gap-1">
-            <Button variant="ghost" size="icon" onClick={() => onEdit(ev)}>
-              <Pencil className="h-4 w-4" />
-            </Button>
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="icon" onClick={() => onEdit(ev)}><Pencil className="h-4 w-4" /></Button>
             <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </AlertDialogTrigger>
+              <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="text-destructive"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
                   <AlertDialogTitle>Excluir evento?</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Esta ação não pode ser desfeita. O evento "{ev.name}" será removido permanentemente.
-                  </AlertDialogDescription>
+                  <AlertDialogDescription>Esta ação não pode ser desfeita. O evento "{ev.name}" será removido permanentemente.</AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={() => onDelete(ev.id)} className="bg-destructive text-destructive-foreground">
-                    Excluir
-                  </AlertDialogAction>
+                  <AlertDialogAction onClick={() => onDelete(ev.id)} className="bg-destructive text-destructive-foreground">Excluir</AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
             </AlertDialog>
@@ -434,30 +384,10 @@ function EventCard({ ev, onEdit, onDelete }: { ev: EventRow; onEdit: (ev: EventR
       </CardHeader>
       <CardContent className="space-y-2 text-sm">
         {ev.description && <p className="text-muted-foreground">{ev.description}</p>}
-        <div className="flex items-center gap-2 text-muted-foreground">
-          <CalendarDays className="h-4 w-4 shrink-0" />
-          <span>
-            {format(new Date(ev.start_date), "dd/MM/yyyy HH:mm", { locale: ptBR })} — {format(new Date(ev.end_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-          </span>
-        </div>
-        {ev.location && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <MapPin className="h-4 w-4 shrink-0" />
-            <span>{ev.location}</span>
-          </div>
-        )}
-        {ev.max_capacity && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Users className="h-4 w-4 shrink-0" />
-            <span>{ev.max_capacity} pessoas</span>
-          </div>
-        )}
-        {ev.estimated_budget != null && ev.estimated_budget > 0 && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <DollarSign className="h-4 w-4 shrink-0" />
-            <span>R$ {Number(ev.estimated_budget).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2 text-muted-foreground"><CalendarDays className="h-4 w-4 shrink-0" /><span>{format(new Date(ev.start_date), "dd/MM/yyyy HH:mm", { locale: ptBR })} — {format(new Date(ev.end_date), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span></div>
+        {ev.location && <div className="flex items-center gap-2 text-muted-foreground"><MapPin className="h-4 w-4 shrink-0" /><span>{ev.location}</span></div>}
+        {ev.max_capacity && <div className="flex items-center gap-2 text-muted-foreground"><Users className="h-4 w-4 shrink-0" /><span>{ev.max_capacity} pessoas</span></div>}
+        {ev.estimated_budget != null && ev.estimated_budget > 0 && <div className="flex items-center gap-2 text-muted-foreground"><DollarSign className="h-4 w-4 shrink-0" /><span>R$ {Number(ev.estimated_budget).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span></div>}
       </CardContent>
     </Card>
   );

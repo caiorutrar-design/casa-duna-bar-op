@@ -373,13 +373,54 @@ export type Database = {
         }
         Relationships: []
       }
+      event_expenses: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string
+          description: string
+          event_id: string
+          id: string
+        }
+        Insert: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          description: string
+          event_id: string
+          id?: string
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string
+          description?: string
+          event_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "event_expenses_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       events: {
         Row: {
+          average_bar_spend_per_person: number | null
+          average_ticket_price: number | null
           created_at: string
           created_by: string | null
           description: string | null
           end_date: string
+          estimated_attendance: number | null
           estimated_budget: number | null
+          estimated_other_revenue: number | null
+          estimated_sponsor_revenue: number | null
+          estimated_vip_revenue: number | null
           event_type: Database["public"]["Enums"]["event_type"]
           id: string
           location: string | null
@@ -390,11 +431,17 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          average_bar_spend_per_person?: number | null
+          average_ticket_price?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           end_date: string
+          estimated_attendance?: number | null
           estimated_budget?: number | null
+          estimated_other_revenue?: number | null
+          estimated_sponsor_revenue?: number | null
+          estimated_vip_revenue?: number | null
           event_type?: Database["public"]["Enums"]["event_type"]
           id?: string
           location?: string | null
@@ -405,11 +452,17 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          average_bar_spend_per_person?: number | null
+          average_ticket_price?: number | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           end_date?: string
+          estimated_attendance?: number | null
           estimated_budget?: number | null
+          estimated_other_revenue?: number | null
+          estimated_sponsor_revenue?: number | null
+          estimated_vip_revenue?: number | null
           event_type?: Database["public"]["Enums"]["event_type"]
           id?: string
           location?: string | null
