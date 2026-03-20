@@ -1,17 +1,24 @@
 {
-  "name": "Casa Duna - Sistema de Controle",
+  "name": "Casa Duna Bar",
   "short_name": "Casa Duna",
-  "description": "Sistema de controle de estoque e vendas para o bar Casa Duna",
+  "description": "Sistema de gestão para o bar de praia Casa Duna",
   "start_url": "/",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "background_color": "#1e1410",
-  "theme_color": "#d97706",
-  "orientation": "portrait",
+  "theme_color": "#c2410c",
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
+      "src": "/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

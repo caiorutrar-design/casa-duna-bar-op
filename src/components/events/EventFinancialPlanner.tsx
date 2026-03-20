@@ -9,7 +9,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Save, Plus, Trash2, TrendingUp, TrendingDown, DollarSign, Users, Target, BarChart3 } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import {
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell,
+  PieChart, Pie, LineChart, Line, Legend,
+} from "recharts";
 
 interface EventRow {
   id: string;
@@ -39,6 +42,15 @@ const EXPENSE_CATEGORIES = [
   { value: "bebidas", label: "Bebidas" },
   { value: "alimentacao", label: "Alimentação" },
   { value: "geral", label: "Geral" },
+];
+
+const CHART_COLORS = [
+  "hsl(18, 90%, 40%)",
+  "hsl(199, 89%, 48%)",
+  "hsl(38, 92%, 50%)",
+  "hsl(145, 45%, 35%)",
+  "hsl(280, 60%, 50%)",
+  "hsl(340, 70%, 50%)",
 ];
 
 export function EventFinancialPlanner({ event }: { event: EventRow }) {
@@ -84,7 +96,7 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
       queryClient.invalidateQueries({ queryKey: ["events"] });
       toast.success("Simulação salva!");
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const addExpenseMutation = useMutation({
@@ -102,7 +114,7 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
       setNewExpense({ description: "", amount: "", category: "geral" });
       toast.success("Despesa adicionada!");
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const deleteExpenseMutation = useMutation({
@@ -114,7 +126,7 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
       queryClient.invalidateQueries({ queryKey: ["event_expenses", event.id] });
       toast.success("Despesa removida!");
     },
-    onError: (err: any) => toast.error(err.message),
+    onError: (err: Error) => toast.error(err.message),
   });
 
   const metrics = useMemo(() => {
@@ -130,14 +142,31 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
     return { ticketRevenue, barRevenue, totalRevenue, totalExpenses, profit, roi, breakEven };
   }, [sim, expenses]);
 
-  const chartData = [
+  // Revenue breakdown for pie chart
+  const revenueBreakdown = [
+    { name: "Ingressos", value: metrics.ticketRevenue },
+    { name: "Bar", value: metrics.barRevenue },
+    { name: "Patrocínio", value: sim.sponsorRevenue },
+    { name: "VIP", value: sim.vipRevenue },
+    { name: "Outras", value: sim.otherRevenue },
+  ].filter((r) => r.value > 0);
+
+  // Expense by category for pie chart
+  const expenseByCategory = EXPENSE_CATEGORIES.map((cat) => ({
+    name: cat.label,
+    value: expenses.filter((e) => e.category === cat.value).reduce((s, e) => s + Number(e.amount), 0),
+  })).filter((e) => e.value > 0);
+
+  // Comparison bar chart
+  const comparisonData = [
     { name: "Receita Prevista", value: metrics.totalRevenue },
     { name: "Custo Total", value: metrics.totalExpenses },
+    { name: "Lucro", value: Math.max(0, metrics.profit) },
   ];
 
   const numInput = (label: string, value: number, key: keyof typeof sim, prefix?: string) => (
     <div className="space-y-1">
-      <Label className="text-xs">{label}</Label>
+      <Label className="text-xs font-body">{label}</Label>
       <div className="relative">
         {prefix && <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">{prefix}</span>}
         <Input
@@ -152,13 +181,15 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
     </div>
   );
 
+  const fmt = (v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`;
+
   return (
     <div className="space-y-6">
       {/* Simulator */}
       <Card>
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="text-base font-display flex items-center gap-2">
               <Target className="h-4 w-4" /> Simulador Interativo
             </CardTitle>
             <Button size="sm" onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending}>
@@ -180,87 +211,111 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
 
       {/* Metrics */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricCard icon={DollarSign} label="Receita Prevista" value={`R$ ${metrics.totalRevenue.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-        <MetricCard icon={TrendingDown} label="Despesa Total" value={`R$ ${metrics.totalExpenses.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} variant="destructive" />
-        <MetricCard
-          icon={TrendingUp}
-          label="Lucro Estimado"
-          value={`R$ ${metrics.profit.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-          variant={metrics.profit >= 0 ? "success" : "destructive"}
-        />
+        <MetricCard icon={DollarSign} label="Receita Prevista" value={fmt(metrics.totalRevenue)} />
+        <MetricCard icon={TrendingDown} label="Despesa Total" value={fmt(metrics.totalExpenses)} variant="destructive" />
+        <MetricCard icon={TrendingUp} label="Lucro Estimado" value={fmt(metrics.profit)} variant={metrics.profit >= 0 ? "success" : "destructive"} />
         <MetricCard icon={BarChart3} label="ROI" value={`${metrics.roi.toFixed(1)}%`} variant={metrics.roi >= 0 ? "success" : "destructive"} />
       </div>
 
       <Card>
         <CardContent className="pt-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <Users className="h-4 w-4" />
-            <span>
-              Break-even: <strong className="text-foreground">{metrics.breakEven > 0 ? `${metrics.breakEven} ingressos` : "N/A"}</strong>
-            </span>
+            <span>Break-even: <strong className="text-foreground">{metrics.breakEven > 0 ? `${metrics.breakEven} ingressos` : "N/A"}</strong></span>
           </div>
         </CardContent>
       </Card>
 
-      {/* Chart */}
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Receita vs Custo</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="h-48">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="name" className="text-xs" />
-                <YAxis className="text-xs" />
-                <Tooltip formatter={(v: number) => `R$ ${v.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  <Cell fill="hsl(var(--primary))" />
-                  <Cell fill="hsl(var(--destructive))" />
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </CardContent>
-      </Card>
+      {/* Charts */}
+      <div className="grid md:grid-cols-2 gap-4">
+        {/* Revenue vs Cost Bar */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display">Receita vs Custo vs Lucro</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={comparisonData}>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                  <XAxis dataKey="name" className="text-xs" tick={{ fontSize: 11 }} />
+                  <YAxis className="text-xs" tick={{ fontSize: 11 }} />
+                  <Tooltip formatter={(v: number) => fmt(v)} />
+                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
+                    <Cell fill="hsl(199, 89%, 48%)" />
+                    <Cell fill="hsl(4, 80%, 45%)" />
+                    <Cell fill="hsl(145, 45%, 35%)" />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Revenue Pie */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display">Composição da Receita</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-48">
+              {revenueBreakdown.length > 0 ? (
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={revenueBreakdown} cx="50%" cy="50%" innerRadius={40} outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                      {revenueBreakdown.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip formatter={(v: number) => fmt(v)} />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center pt-16">Sem dados de receita</p>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Expense by category pie */}
+      {expenseByCategory.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base font-display">Despesas por Categoria</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-48">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={expenseByCategory} cx="50%" cy="50%" outerRadius={70} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}>
+                    {expenseByCategory.map((_, i) => <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} />)}
+                  </Pie>
+                  <Tooltip formatter={(v: number) => fmt(v)} />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Expenses CRUD */}
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Despesas do Evento</CardTitle>
+          <CardTitle className="text-base font-display">Despesas do Evento</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex gap-2 flex-wrap">
-            <Input
-              placeholder="Descrição"
-              value={newExpense.description}
-              onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })}
-              className="flex-1 min-w-[140px]"
-            />
-            <Input
-              type="number"
-              placeholder="Valor"
-              min={0}
-              step={0.01}
-              value={newExpense.amount}
-              onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })}
-              className="w-28"
-            />
+            <Input placeholder="Descrição" value={newExpense.description} onChange={(e) => setNewExpense({ ...newExpense, description: e.target.value })} className="flex-1 min-w-[140px]" />
+            <Input type="number" placeholder="Valor" min={0} step={0.01} value={newExpense.amount} onChange={(e) => setNewExpense({ ...newExpense, amount: e.target.value })} className="w-28" />
             <Select value={newExpense.category} onValueChange={(v) => setNewExpense({ ...newExpense, category: v })}>
               <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {EXPENSE_CATEGORIES.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
               </SelectContent>
             </Select>
-            <Button
-              size="icon"
-              onClick={() => {
-                if (!newExpense.description.trim() || !newExpense.amount) { toast.error("Preencha descrição e valor"); return; }
-                addExpenseMutation.mutate();
-              }}
-              disabled={addExpenseMutation.isPending}
-            >
+            <Button size="icon" onClick={() => {
+              if (!newExpense.description.trim() || !newExpense.amount) { toast.error("Preencha descrição e valor"); return; }
+              addExpenseMutation.mutate();
+            }} disabled={addExpenseMutation.isPending}>
               <Plus className="h-4 w-4" />
             </Button>
           </div>
@@ -270,7 +325,7 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
           ) : (
             <div className="space-y-2">
               {expenses.map((exp) => (
-                <div key={exp.id} className="flex items-center justify-between rounded-md border px-3 py-2">
+                <div key={exp.id} className="flex items-center justify-between rounded-lg border px-3 py-2 hover:bg-muted/50 transition-colors">
                   <div className="flex items-center gap-2 flex-1 min-w-0">
                     <span className="text-sm truncate">{exp.description}</span>
                     <Badge variant="outline" className="text-xs shrink-0">
@@ -278,7 +333,7 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
                     </Badge>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-sm font-medium">R$ {Number(exp.amount).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                    <span className="text-sm font-medium tabular-nums">{fmt(Number(exp.amount))}</span>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => deleteExpenseMutation.mutate(exp.id)}>
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -293,15 +348,15 @@ export function EventFinancialPlanner({ event }: { event: EventRow }) {
   );
 }
 
-function MetricCard({ icon: Icon, label, value, variant }: { icon: any; label: string; value: string; variant?: "success" | "destructive" }) {
+function MetricCard({ icon: Icon, label, value, variant }: { icon: typeof DollarSign; label: string; value: string; variant?: "success" | "destructive" }) {
   return (
     <Card>
       <CardContent className="pt-4 pb-3 px-4">
         <div className="flex items-center gap-2 mb-1">
-          <Icon className={`h-4 w-4 ${variant === "destructive" ? "text-destructive" : variant === "success" ? "text-green-600" : "text-muted-foreground"}`} />
-          <span className="text-xs text-muted-foreground">{label}</span>
+          <Icon className={`h-4 w-4 ${variant === "destructive" ? "text-destructive" : variant === "success" ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`} />
+          <span className="text-xs text-muted-foreground font-body">{label}</span>
         </div>
-        <p className={`text-lg font-bold ${variant === "destructive" ? "text-destructive" : variant === "success" ? "text-green-600" : "text-foreground"}`}>
+        <p className={`text-lg font-bold tabular-nums ${variant === "destructive" ? "text-destructive" : variant === "success" ? "text-green-600 dark:text-green-400" : "text-foreground"}`}>
           {value}
         </p>
       </CardContent>
