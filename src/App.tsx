@@ -4,6 +4,9 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { PageSkeleton } from "@/components/PageSkeleton";
+import { Layout } from "@/components/Layout";
 
 const Auth = lazy(() => import("./pages/Auth"));
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -22,9 +25,9 @@ const AuditLogs = lazy(() => import("./pages/AuditLogs"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageFallback = () => (
-  <div className="min-h-screen flex items-center justify-center">
-    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-  </div>
+  <Layout>
+    <PageSkeleton />
+  </Layout>
 );
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -59,40 +62,42 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const queryClient = new QueryClient();
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Sonner />
-      <BrowserRouter>
-        <Suspense fallback={<PageFallback />}>
-          <Routes>
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/comanda" element={<CustomerOrder />} />
-            {[
-              { path: "/", element: <HomePage /> },
-              { path: "/sales", element: <Sales /> },
-              { path: "/stock", element: <Stock /> },
-              { path: "/entry", element: <Entry /> },
-              { path: "/reports", element: <Reports /> },
-              { path: "/bar", element: <BarNotifications /> },
-              { path: "/cash-closure", element: <CashClosure /> },
-              { path: "/dre", element: <IncomeStatement /> },
-              { path: "/events", element: <Events /> },
-              { path: "/collaborators", element: <Collaborators /> },
-              { path: "/stock-withdrawal", element: <StockWithdrawal /> },
-              { path: "/audit", element: <AuditLogs /> },
-            ].map(({ path, element }) => (
-              <Route
-                key={path}
-                path={path}
-                element={<ProtectedRoute>{element}</ProtectedRoute>}
-              />
-            ))}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Sonner />
+        <BrowserRouter>
+          <Suspense fallback={<PageFallback />}>
+            <Routes>
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/comanda" element={<CustomerOrder />} />
+              {[
+                { path: "/", element: <HomePage /> },
+                { path: "/sales", element: <Sales /> },
+                { path: "/stock", element: <Stock /> },
+                { path: "/entry", element: <Entry /> },
+                { path: "/reports", element: <Reports /> },
+                { path: "/bar", element: <BarNotifications /> },
+                { path: "/cash-closure", element: <CashClosure /> },
+                { path: "/dre", element: <IncomeStatement /> },
+                { path: "/events", element: <Events /> },
+                { path: "/collaborators", element: <Collaborators /> },
+                { path: "/stock-withdrawal", element: <StockWithdrawal /> },
+                { path: "/audit", element: <AuditLogs /> },
+              ].map(({ path, element }) => (
+                <Route
+                  key={path}
+                  path={path}
+                  element={<ProtectedRoute>{element}</ProtectedRoute>}
+                />
+              ))}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 );
 
 export default App;

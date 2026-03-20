@@ -46,24 +46,24 @@ export default function HomePage() {
   });
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen bg-gradient-sand flex flex-col">
       {/* Header */}
-      <header className="bg-gradient-dark shadow-soft sticky top-0 z-50">
+      <header className="bg-gradient-dark shadow-strong sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-primary-foreground">Casa Duna</h1>
+              <h1 className="text-xl font-display font-bold text-primary-foreground tracking-tight">Casa Duna</h1>
               {bartenderName && (
-                <p className="text-xs text-primary-foreground/60">
+                <p className="text-xs text-primary-foreground/60 font-body">
                   Olá, <span className="font-semibold">{bartenderName}</span>
                 </p>
               )}
             </div>
             <button
               onClick={() => setSettingsOpen(true)}
-              className="rounded-full overflow-hidden border-2 border-primary-foreground/30 hover:border-primary transition-colors h-11 w-11 flex-shrink-0"
+              className="rounded-full overflow-hidden border-2 border-primary/40 hover:border-primary transition-colors h-11 w-11 flex-shrink-0 active:scale-95"
             >
-              <img src={dunaLogo} alt="Duna Club" className="h-full w-full object-cover" />
+              <img src={dunaLogo} alt="Casa Duna" className="h-full w-full object-cover" />
             </button>
           </div>
         </div>
@@ -72,17 +72,18 @@ export default function HomePage() {
       {/* Module Grid */}
       <main className="flex-1 container mx-auto px-4 py-8">
         <div className="grid grid-cols-3 gap-4">
-          {visibleItems.map((item) => (
+          {visibleItems.map((item, i) => (
             <NavLink
               key={item.to}
               to={item.to}
               className="flex flex-col items-center justify-center gap-2 p-5 rounded-xl bg-card border border-border shadow-soft hover:shadow-strong hover:border-primary/40 transition-all active:scale-95"
               activeClassName=""
+              style={{ animationDelay: `${i * 60}ms` } as React.CSSProperties}
             >
               <div className="h-14 w-14 rounded-full bg-primary/10 flex items-center justify-center">
                 <item.icon className="h-7 w-7 text-primary" />
               </div>
-              <span className="text-sm font-semibold text-foreground text-center leading-tight">{item.label}</span>
+              <span className="text-sm font-semibold font-body text-foreground text-center leading-tight">{item.label}</span>
             </NavLink>
           ))}
         </div>

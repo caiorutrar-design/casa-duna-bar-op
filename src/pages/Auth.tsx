@@ -28,7 +28,7 @@ export default function Auth() {
         redirect_uri: window.location.origin,
       });
       if (error) throw error;
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Google login error:", error);
       toast.error("Erro ao fazer login com Google");
     } finally {
@@ -37,10 +37,7 @@ export default function Auth() {
   };
 
   const handleResetPassword = async () => {
-    if (!resetEmail.trim()) {
-      toast.error("Digite seu email");
-      return;
-    }
+    if (!resetEmail.trim()) { toast.error("Digite seu email"); return; }
     setResetLoading(true);
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(resetEmail.trim(), {
@@ -50,7 +47,7 @@ export default function Auth() {
       toast.success("Email de redefinição enviado! Verifique sua caixa de entrada.");
       setResetOpen(false);
       setResetEmail("");
-    } catch (error: any) {
+    } catch {
       toast.error("Erro ao enviar email de redefinição");
     } finally {
       setResetLoading(false);
@@ -59,36 +56,23 @@ export default function Auth() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) {
-      toast.error("Por favor, preencha todos os campos");
-      return;
-    }
+    if (!email.trim() || !password.trim()) { toast.error("Por favor, preencha todos os campos"); return; }
     setLoading(true);
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email: email.trim(),
-        password: password.trim(),
-      });
+      const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: password.trim() });
       if (error) throw error;
       if (data.user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("bartender_name")
-          .eq("user_id", data.user.id)
-          .single();
+        const { data: profile } = await supabase.from("profiles").select("bartender_name").eq("user_id", data.user.id).single();
         const name = profile?.bartender_name || email;
         await logAuditAction("login", "auth", { method: "email" });
         toast.success(`Bem-vindo, ${name}!`);
         navigate("/");
       }
-    } catch (error: any) {
-      if (error.message?.includes("Invalid login credentials")) {
-        toast.error("Email ou senha inválidos");
-      } else if (error.message?.includes("Email not confirmed")) {
-        toast.error("Verifique seu email para confirmar o cadastro");
-      } else {
-        toast.error("Erro ao fazer login");
-      }
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "";
+      if (msg.includes("Invalid login credentials")) toast.error("Email ou senha inválidos");
+      else if (msg.includes("Email not confirmed")) toast.error("Verifique seu email para confirmar o cadastro");
+      else toast.error("Erro ao fazer login");
     } finally {
       setLoading(false);
     }
@@ -96,60 +80,41 @@ export default function Auth() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim() || !bartenderName.trim()) {
-      toast.error("Por favor, preencha todos os campos");
-      return;
-    }
-    if (password.length < 6) {
-      toast.error("A senha deve ter pelo menos 6 caracteres");
-      return;
-    }
+    if (!email.trim() || !password.trim() || !bartenderName.trim()) { toast.error("Por favor, preencha todos os campos"); return; }
+    if (password.length < 6) { toast.error("A senha deve ter pelo menos 6 caracteres"); return; }
     setLoading(true);
     try {
       const { data, error } = await supabase.auth.signUp({
-        email: email.trim(),
-        password: password.trim(),
-        options: {
-          data: { bartender_name: bartenderName.trim() },
-          emailRedirectTo: window.location.origin,
-        },
+        email: email.trim(), password: password.trim(),
+        options: { data: { bartender_name: bartenderName.trim() }, emailRedirectTo: window.location.origin },
       });
       if (error) throw error;
-      if (data.user) {
-        toast.success("Cadastro realizado! Verifique seu email para confirmar.");
-      }
-    } catch (error: any) {
-      if (error.message?.includes("already registered")) {
-        toast.error("Este email já está cadastrado");
-      } else {
-        toast.error("Erro ao criar conta");
-      }
+      if (data.user) toast.success("Cadastro realizado! Verifique seu email para confirmar.");
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : "";
+      if (msg.includes("already registered")) toast.error("Este email já está cadastrado");
+      else toast.error("Erro ao criar conta");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-primary flex items-center justify-center p-4">
-      <Card className="w-full max-w-md shadow-strong">
+    <div className="min-h-screen bg-gradient-dark flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-strong border-primary/20">
         <CardHeader className="text-center">
-          <CardTitle className="text-3xl font-bold text-primary">Casa Duna</CardTitle>
-          <CardDescription>Faça login para continuar</CardDescription>
+          <CardTitle className="text-3xl font-display font-bold text-primary">Casa Duna</CardTitle>
+          <CardDescription className="font-body">Faça login para continuar</CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="signup">Cadastrar</TabsTrigger>
+              <TabsTrigger value="login" className="font-body">Entrar</TabsTrigger>
+              <TabsTrigger value="signup" className="font-body">Cadastrar</TabsTrigger>
             </TabsList>
             <TabsContent value="login">
               <div className="space-y-4 mt-4">
-                <Button
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleGoogleLogin}
-                  disabled={loading}
-                >
+                <Button variant="outline" className="w-full font-body active:scale-95" onClick={handleGoogleLogin} disabled={loading}>
                   <svg className="h-5 w-5 mr-2" viewBox="0 0 24 24">
                     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
                     <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
@@ -158,17 +123,11 @@ export default function Auth() {
                   </svg>
                   Entrar com Google
                 </Button>
-
                 <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <Separator className="w-full" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-card px-2 text-muted-foreground">ou</span>
-                  </div>
+                  <div className="absolute inset-0 flex items-center"><Separator className="w-full" /></div>
+                  <div className="relative flex justify-center text-xs uppercase"><span className="bg-card px-2 text-muted-foreground font-body">ou</span></div>
                 </div>
-
-                <form onSubmit={handleLogin} className="space-y-4">
+                <form onSubmit={handleLogin} className="space-y-4 font-body">
                   <div>
                     <label htmlFor="login-email" className="text-sm font-medium text-foreground mb-2 block">Email</label>
                     <Input id="login-email" type="email" placeholder="Digite seu email" value={email} onChange={(e) => setEmail(e.target.value)} />
@@ -177,21 +136,15 @@ export default function Auth() {
                     <label htmlFor="login-password" className="text-sm font-medium text-foreground mb-2 block">Senha</label>
                     <Input id="login-password" type="password" placeholder="Digite sua senha" value={password} onChange={(e) => setPassword(e.target.value)} />
                   </div>
-                  <Button type="submit" className="w-full" disabled={loading}>
-                    {loading ? "Entrando..." : "Entrar"}
-                  </Button>
-                  <button
-                    type="button"
-                    onClick={() => { setResetEmail(email); setResetOpen(true); }}
-                    className="w-full text-sm text-primary hover:underline mt-2"
-                  >
+                  <Button type="submit" className="w-full active:scale-95" disabled={loading}>{loading ? "Entrando..." : "Entrar"}</Button>
+                  <button type="button" onClick={() => { setResetEmail(email); setResetOpen(true); }} className="w-full text-sm text-primary hover:underline mt-2">
                     Esqueci minha senha
                   </button>
                 </form>
               </div>
             </TabsContent>
             <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4 mt-4">
+              <form onSubmit={handleSignUp} className="space-y-4 mt-4 font-body">
                 <div>
                   <label htmlFor="signup-name" className="text-sm font-medium text-foreground mb-2 block">Nome</label>
                   <Input id="signup-name" type="text" placeholder="Digite seu nome" value={bartenderName} onChange={(e) => setBartenderName(e.target.value)} />
@@ -204,9 +157,7 @@ export default function Auth() {
                   <label htmlFor="signup-password" className="text-sm font-medium text-foreground mb-2 block">Senha</label>
                   <Input id="signup-password" type="password" placeholder="Mínimo 6 caracteres" value={password} onChange={(e) => setPassword(e.target.value)} />
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? "Cadastrando..." : "Criar Conta"}
-                </Button>
+                <Button type="submit" className="w-full active:scale-95" disabled={loading}>{loading ? "Cadastrando..." : "Criar Conta"}</Button>
               </form>
             </TabsContent>
           </Tabs>
@@ -216,12 +167,12 @@ export default function Auth() {
       <Dialog open={resetOpen} onOpenChange={setResetOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Redefinir Senha</DialogTitle>
-            <DialogDescription>Digite seu email para receber um link de redefinição de senha.</DialogDescription>
+            <DialogTitle className="font-display">Redefinir Senha</DialogTitle>
+            <DialogDescription className="font-body">Digite seu email para receber um link de redefinição de senha.</DialogDescription>
           </DialogHeader>
-          <div className="space-y-4">
+          <div className="space-y-4 font-body">
             <Input type="email" placeholder="Digite seu email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} />
-            <Button onClick={handleResetPassword} className="w-full" disabled={resetLoading}>
+            <Button onClick={handleResetPassword} className="w-full active:scale-95" disabled={resetLoading}>
               {resetLoading ? "Enviando..." : "Enviar Link"}
             </Button>
           </div>
