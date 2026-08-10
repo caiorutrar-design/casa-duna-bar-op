@@ -10,11 +10,49 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  try {
-    const { tableNumber } = await req.json();
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
 
-    const num = parseInt(tableNumber, 10);
-    if (isNaN(num) || num < 1 || num > 999) {
+  try {
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (typeof body !== "object" || body === null || Array.isArray(body)) {
+      return new Response(JSON.stringify({ error: "Invalid request body" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const raw = (body as Record<string, unknown>).tableNumber;
+    if (typeof raw !== "number" && typeof raw !== "string") {
+      return new Response(JSON.stringify({ error: "Invalid table number" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const str = String(raw).trim();
+    if (!/^\d{1,3}$/.test(str)) {
+      return new Response(JSON.stringify({ error: "Invalid table number" }), {
+        status: 400,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    const num = Number(str);
+    if (!Number.isInteger(num) || num < 1 || num > 999) {
       return new Response(JSON.stringify({ error: "Invalid table number" }), {
         status: 400,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
