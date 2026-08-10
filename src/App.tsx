@@ -22,6 +22,7 @@ const Events = lazy(() => import("./pages/Events"));
 const Collaborators = lazy(() => import("./pages/Collaborators"));
 const StockWithdrawal = lazy(() => import("./pages/StockWithdrawal"));
 const AuditLogs = lazy(() => import("./pages/AuditLogs"));
+const Users = lazy(() => import("./pages/Users"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const PageFallback = () => (
@@ -84,6 +85,7 @@ const App = () => (
                 { path: "/collaborators", element: <Collaborators /> },
                 { path: "/stock-withdrawal", element: <StockWithdrawal /> },
                 { path: "/audit", element: <AuditLogs /> },
+                { path: "/users", element: <Users /> },
               ].map(({ path, element }) => (
                 <Route
                   key={path}

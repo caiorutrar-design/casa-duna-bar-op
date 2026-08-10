@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { Home, Package, TrendingUp, FileText, Bell, DollarSign, BarChart3, CalendarDays, Users, PackageMinus, Shield } from "lucide-react";
+import { Home, Package, TrendingUp, FileText, Bell, DollarSign, BarChart3, CalendarDays, Users, PackageMinus, Shield, UserCog } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useState, useEffect } from "react";
 import { SettingsDialog } from "@/components/SettingsDialog";
@@ -18,6 +18,7 @@ const NAV_ITEMS = [
   { to: "/events", icon: CalendarDays, label: "Eventos", path: "/events" },
   { to: "/collaborators", icon: Users, label: "Equipe", path: "/collaborators" },
   { to: "/audit", icon: Shield, label: "Auditoria", path: "/audit" },
+  { to: "/users", icon: UserCog, label: "Usuários", path: "/users" },
 ];
 
 export default function HomePage() {
@@ -41,7 +42,7 @@ export default function HomePage() {
   }, []);
 
   const visibleItems = NAV_ITEMS.filter((item) => {
-    if (item.path === "/dre" || item.path === "/audit") return isAdmin;
+    if (item.path === "/dre" || item.path === "/audit" || item.path === "/users") return isAdmin;
     return canAccessPage(item.path);
   });
 
