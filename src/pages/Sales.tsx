@@ -26,6 +26,8 @@ interface Drink {
   name: string;
   brand: string;
   item_number: number | null;
+  price?: number;
+  description?: string | null;
 }
 
 interface Order {
@@ -514,13 +516,25 @@ export default function Sales() {
           </div>
 
           <div className="border-t pt-4 mt-4">
-            <p className="text-sm font-semibold mb-2">Referência Rápida:</p>
-            <ScrollArea className="h-32">
-              <div className="grid grid-cols-2 gap-1 text-xs">
-                {drinks.filter(d => d.item_number).map((drink) => (
-                  <div key={drink.id} className="flex gap-1">
-                    <Badge variant="outline" className="text-xs">{drink.item_number}</Badge>
-                    <span className="truncate">{drink.name}</span>
+            <p className="text-sm font-display font-semibold mb-2">Cardápio</p>
+            <ScrollArea className="h-40">
+              <div className="space-y-3 pr-2">
+                {Array.from(new Set(drinks.map((d) => d.brand || "Outros"))).map((cat) => (
+                  <div key={cat}>
+                    <p className="text-[11px] uppercase tracking-widest text-muted-foreground mb-1">{cat}</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 text-xs">
+                      {drinks
+                        .filter((d) => (d.brand || "Outros") === cat)
+                        .map((drink) => (
+                          <div key={drink.id} className="flex items-center gap-2">
+                            <Badge variant="outline" className="text-xs">{drink.item_number}</Badge>
+                            <span className="truncate flex-1">{drink.name}</span>
+                            <span className="font-semibold text-primary whitespace-nowrap">
+                              R$ {Number(drink.price ?? 0).toFixed(2)}
+                            </span>
+                          </div>
+                        ))}
+                    </div>
                   </div>
                 ))}
               </div>
