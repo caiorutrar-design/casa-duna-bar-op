@@ -844,6 +844,7 @@ export type Database = {
         Returns: boolean
       }
       is_manager_or_admin: { Args: { _user_id: string }; Returns: boolean }
+      is_staff: { Args: { _user_id: string }; Returns: boolean }
       process_sale: {
         Args: {
           p_bartender_name: string
