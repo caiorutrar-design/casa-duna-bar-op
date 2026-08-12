@@ -6,7 +6,9 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Users, Plus, X, Check, ArrowLeft, Send, CreditCard, Banknote, Smartphone } from "lucide-react";
+import { Users, Plus, X, Check, ArrowLeft, Send, CreditCard, Banknote, Smartphone, QrCode, Timer } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import { ElapsedTimer } from "@/components/ElapsedTimer";
 import {
   Dialog,
   DialogContent,
@@ -46,6 +48,8 @@ interface OrderItem {
   status: string;
   drinks: Drink;
 }
+
+const MENU_URL = "https://cafe.dunaclub.com";
 
 export default function Sales() {
   const [tables, setTables] = useState<Table[]>([]);
@@ -302,6 +306,30 @@ export default function Sales() {
           <p className="text-muted-foreground">Selecione uma mesa para abrir comanda</p>
         </div>
 
+        <Card className="border-primary/30">
+          <CardContent className="flex flex-col items-center gap-3 p-5 sm:flex-row sm:items-center sm:gap-6">
+            <div className="rounded-lg bg-card p-2 border border-border">
+              <QRCodeSVG value={MENU_URL} size={112} level="M" />
+            </div>
+            <div className="text-center sm:text-left">
+              <p className="font-display font-bold text-foreground flex items-center justify-center gap-2 sm:justify-start">
+                <QrCode className="h-5 w-5 text-primary" /> Cardápio digital
+              </p>
+              <p className="text-sm text-muted-foreground font-body">
+                Mostre este QR code ao cliente para abrir o cardápio.
+              </p>
+              <a
+                href={MENU_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm font-semibold text-primary underline underline-offset-4"
+              >
+                cafe.dunaclub.com
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-3 md:grid-cols-5 lg:grid-cols-6 gap-4">
           {tables.map((table) => (
             <Card
@@ -341,6 +369,12 @@ export default function Sales() {
                 <ArrowLeft className="h-4 w-4" />
               </Button>
               Comanda - Mesa {selectedTable?.table_number}
+              {currentOrder && (
+                <Badge variant="secondary" className="ml-auto gap-1.5 font-mono">
+                  <Timer className="h-3.5 w-3.5" />
+                  <ElapsedTimer start={currentOrder.created_at} />
+                </Badge>
+              )}
             </DialogTitle>
           </DialogHeader>
 
@@ -509,7 +543,7 @@ export default function Sales() {
                   disabled={processing || orderItems.length === 0}
                 >
                   <Send className="h-4 w-4 mr-2" />
-                  Enviar ao Bar
+                  Enviar à Cozinha
                 </Button>
               </div>
             </div>

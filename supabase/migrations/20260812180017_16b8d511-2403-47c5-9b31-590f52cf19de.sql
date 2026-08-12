@@ -1,0 +1,4 @@
+CREATE POLICY "Staff can view avatars" ON storage.objects FOR SELECT TO authenticated USING (bucket_id = 'avatars' AND public.is_staff(auth.uid()));
+CREATE POLICY "Managers can upload avatars" ON storage.objects FOR INSERT TO authenticated WITH CHECK (bucket_id = 'avatars' AND public.is_manager_or_admin(auth.uid()));
+CREATE POLICY "Managers can update avatars" ON storage.objects FOR UPDATE TO authenticated USING (bucket_id = 'avatars' AND public.is_manager_or_admin(auth.uid()));
+CREATE POLICY "Managers can delete avatars" ON storage.objects FOR DELETE TO authenticated USING (bucket_id = 'avatars' AND public.is_manager_or_admin(auth.uid()));

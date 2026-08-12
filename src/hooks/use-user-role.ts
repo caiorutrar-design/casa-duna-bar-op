@@ -4,13 +4,31 @@ import { supabase } from "@/integrations/supabase/client";
 export type AppRole = "bartender" | "manager" | "admin" | "garcom" | "barman" | "usuario";
 
 // Page access mapping per role
+// - Cozinha (barman): apenas o módulo da cozinha
+// - Vendas (garcom/bartender): apenas o módulo de vendas
+// - Demais módulos: somente gerente ou administrador
+const MANAGER_PAGES = [
+  "/sales",
+  "/kitchen",
+  "/stock",
+  "/entry",
+  "/cash-closure",
+  "/reports",
+  "/dre",
+  "/events",
+  "/collaborators",
+  "/stock-withdrawal",
+  "/audit",
+  "/menu",
+];
+
 const ROLE_PAGES: Record<AppRole, string[]> = {
   admin: ["all"],
-  manager: ["/sales", "/stock", "/entry", "/cash-closure", "/reports"],
-  garcom: ["/sales", "/bar", "/cash-closure", "/reports"],
-  bartender: ["/sales", "/bar", "/cash-closure", "/reports"],
-  barman: ["/bar", "/stock-withdrawal", "/stock", "/reports"],
-  usuario: ["/events", "/collaborators", "/reports", "/audit"],
+  manager: MANAGER_PAGES,
+  garcom: ["/sales"],
+  bartender: ["/sales"],
+  barman: ["/kitchen"],
+  usuario: [],
 };
 
 export function useUserRole() {
@@ -44,11 +62,19 @@ export function useUserRole() {
 
   const canAccessPage = (path: string): boolean => {
     if (roles.length === 0) return false;
+    if (path === "/users") return isAdmin;
     return roles.some((role) => {
-      const pages = ROLE_PAGES[role];
+      const pages = ROLE_PAGES[role] ?? [];
       return pages.includes("all") || pages.includes(path);
     });
   };
 
-  return { roles, isAdmin, isManager, loading, canAccessPage };
+  const homePath = (): string => {
+    if (isManager) return "/";
+    if (roles.includes("barman")) return "/kitchen";
+    if (roles.includes("garcom") || roles.includes("bartender")) return "/sales";
+    return "/";
+  };
+
+  return { roles, isAdmin, isManager, loading, canAccessPage, homePath };
 }

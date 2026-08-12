@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { Home, Package, TrendingUp, FileText, Bell, DollarSign, BarChart3, CalendarDays, Users, PackageMinus, Shield, UserCog } from "lucide-react";
+import { Home, Package, TrendingUp, FileText, ChefHat, BookOpen, DollarSign, BarChart3, CalendarDays, Users, PackageMinus, Shield, UserCog } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useState, useEffect } from "react";
 import { SettingsDialog } from "@/components/SettingsDialog";
@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   { to: "/sales", icon: Home, label: "Vendas", path: "/sales" },
   { to: "/stock", icon: Package, label: "Estoque", path: "/stock" },
   { to: "/entry", icon: TrendingUp, label: "Entrada", path: "/entry" },
-  { to: "/bar", icon: Bell, label: "Bar", path: "/bar" },
+  { to: "/kitchen", icon: ChefHat, label: "Cozinha", path: "/kitchen" },
   { to: "/cash-closure", icon: DollarSign, label: "Caixa", path: "/cash-closure" },
   { to: "/dre", icon: BarChart3, label: "DRE", path: "/dre" },
   { to: "/reports", icon: FileText, label: "Alertas", path: "/reports" },
@@ -18,11 +18,12 @@ const NAV_ITEMS = [
   { to: "/events", icon: CalendarDays, label: "Eventos", path: "/events" },
   { to: "/collaborators", icon: Users, label: "Equipe", path: "/collaborators" },
   { to: "/audit", icon: Shield, label: "Auditoria", path: "/audit" },
+  { to: "/menu", icon: BookOpen, label: "Cardápio", path: "/menu" },
   { to: "/users", icon: UserCog, label: "Usuários", path: "/users" },
 ];
 
 export default function HomePage() {
-  const { canAccessPage, isAdmin } = useUserRole();
+  const { canAccessPage } = useUserRole();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [bartenderName, setBartenderName] = useState<string | null>(null);
 
@@ -41,10 +42,7 @@ export default function HomePage() {
     fetchName();
   }, []);
 
-  const visibleItems = NAV_ITEMS.filter((item) => {
-    if (item.path === "/dre" || item.path === "/audit" || item.path === "/users") return isAdmin;
-    return canAccessPage(item.path);
-  });
+  const visibleItems = NAV_ITEMS.filter((item) => canAccessPage(item.path));
 
   return (
     <div className="min-h-screen bg-gradient-sand flex flex-col">

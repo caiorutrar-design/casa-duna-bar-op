@@ -54,13 +54,14 @@ Deno.serve(async (req) => {
       if (error) throw error;
       const ids = list.users.map((u) => u.id);
       const { data: roles } = await admin.from("user_roles").select("user_id, role").in("user_id", ids);
-      const { data: profiles } = await admin.from("profiles").select("user_id, bartender_name").in("user_id", ids);
+      const { data: profiles } = await admin.from("profiles").select("user_id, bartender_name, photo_url").in("user_id", ids);
       return json({
         users: list.users.map((u) => ({
           id: u.id,
           email: u.email,
           created_at: u.created_at,
           name: profiles?.find((p) => p.user_id === u.id)?.bartender_name ?? u.email,
+          photo_url: profiles?.find((p) => p.user_id === u.id)?.photo_url ?? null,
           roles: (roles ?? []).filter((r) => r.user_id === u.id).map((r) => r.role),
         })),
       });
@@ -95,6 +96,18 @@ Deno.serve(async (req) => {
       if (!userId || !ROLES.includes(role)) return json({ error: "Dados inválidos" }, 400);
       await admin.from("user_roles").delete().eq("user_id", userId);
       const { error } = await admin.from("user_roles").insert({ user_id: userId, role });
+      if (error) return json({ error: error.message }, 400);
+      return json({ success: true });
+    }
+
+    if (action === "set_photo") {
+      const userId = String(body.user_id ?? "");
+      const photoPath = body.photo_url === null ? null : String(body.photo_url ?? "");
+      if (!/^[0-9a-f-]{36}$/i.test(userId)) return json({ error: "Dados inválidos" }, 400);
+      if (photoPath !== null && (photoPath.length === 0 || photoPath.length > 300 || !/^[\w./-]+$/.test(photoPath))) {
+        return json({ error: "Caminho de foto inválido" }, 400);
+      }
+      const { error } = await admin.from("profiles").update({ photo_url: photoPath }).eq("user_id", userId);
       if (error) return json({ error: error.message }, 400);
       return json({ success: true });
     }
