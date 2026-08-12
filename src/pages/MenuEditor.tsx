@@ -82,7 +82,7 @@ export default function MenuEditor() {
         const { error } = await supabase.from("drinks").update(payload).eq("id", form.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("drinks").insert(payload);
+        const { error } = await supabase.from("drinks").insert([{ ...payload, name: parsed.data.name }]);
         if (error) throw error;
       }
     },
