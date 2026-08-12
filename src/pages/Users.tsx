@@ -10,7 +10,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { PageSkeleton } from "@/components/PageSkeleton";
-import { Trash2, UserPlus } from "lucide-react";
+import { Trash2, UserPlus, Camera, History } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { UserHistory } from "@/components/users/UserHistory";
+import { useRef, useEffect } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -18,7 +23,7 @@ const ROLE_OPTIONS: { value: AppRole; label: string }[] = [
   { value: "admin", label: "Administrador" },
   { value: "manager", label: "Gerente" },
   { value: "garcom", label: "Garçom" },
-  { value: "barman", label: "Barman" },
+  { value: "barman", label: "Cozinha" },
   { value: "bartender", label: "Bartender" },
   { value: "usuario", label: "Usuário" },
 ];
@@ -36,6 +41,7 @@ type ManagedUser = {
   name: string | null;
   created_at: string;
   roles: AppRole[];
+  photo_url: string | null;
 };
 
 const callFn = async (payload: Record<string, unknown>) => {
@@ -48,9 +54,69 @@ const callFn = async (payload: Record<string, unknown>) => {
   return data;
 };
 
+const AvatarCell = ({ user, onUploaded }: { user: ManagedUser; onUploaded: () => void }) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [signed, setSigned] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!user.photo_url) { setSigned(null); return; }
+    supabase.storage.from("avatars").createSignedUrl(user.photo_url, 3600).then(({ data }) => {
+      if (active) setSigned(data?.signedUrl ?? null);
+    });
+    return () => { active = false; };
+  }, [user.photo_url]);
+
+  const upload = async (file: File) => {
+    if (file.size > 5 * 1024 * 1024) { toast.error("Imagem muito grande (máx. 5MB)"); return; }
+    if (!file.type.startsWith("image/")) { toast.error("Envie um arquivo de imagem"); return; }
+    setUploading(true);
+    try {
+      const ext = (file.name.split(".").pop() || "jpg").toLowerCase().replace(/[^a-z0-9]/g, "");
+      const path = `${user.id}/${Date.now()}.${ext}`;
+      const { error } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (error) throw error;
+      await callFn({ action: "set_photo", user_id: user.id, photo_url: path });
+      toast.success("Foto atualizada");
+      onUploaded();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Erro ao enviar foto");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className="relative shrink-0"
+      onClick={() => inputRef.current?.click()}
+      disabled={uploading}
+      title="Alterar foto do colaborador"
+    >
+      <Avatar className="h-12 w-12 border border-border">
+        {signed && <AvatarImage src={signed} alt={user.name ?? "Colaborador"} />}
+        <AvatarFallback>{(user.name ?? "?").slice(0, 2).toUpperCase()}</AvatarFallback>
+      </Avatar>
+      <span className="absolute -bottom-1 -right-1 rounded-full bg-primary p-1 text-primary-foreground">
+        <Camera className="h-3 w-3" />
+      </span>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) upload(f); e.target.value = ""; }}
+      />
+    </button>
+  );
+};
+
 export default function Users() {
   const { isAdmin, loading } = useUserRole();
   const queryClient = useQueryClient();
+  const [historyUser, setHistoryUser] = useState<ManagedUser | null>(null);
   const [form, setForm] = useState({ name: "", email: "", password: "", role: "garcom" as AppRole });
 
   const { data, isLoading } = useQuery({
@@ -159,13 +225,17 @@ export default function Users() {
           <CardContent className="space-y-3">
             {isLoading && <p className="text-sm text-muted-foreground font-body">Carregando...</p>}
             {data?.users?.map((u) => (
-              <div key={u.id} className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center sm:justify-between">
-                <div className="min-w-0">
+              <div key={u.id} className="flex flex-col gap-3 rounded-lg border border-border p-3 sm:flex-row sm:items-center">
+                <AvatarCell user={u} onUploaded={invalidate} />
+                <div className="min-w-0 flex-1">
                   <p className="font-semibold font-body text-foreground truncate">{u.name}</p>
                   <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                   {u.roles.length === 0 && <Badge variant="secondary" className="mt-1">sem função</Badge>}
                 </div>
                 <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={() => setHistoryUser(u)}>
+                    <History className="h-4 w-4 mr-1.5" /> Histórico
+                  </Button>
                   <Select
                     value={u.roles[0] ?? ""}
                     onValueChange={(v) => setRole.mutate({ user_id: u.id, role: v as AppRole })}
@@ -195,6 +265,17 @@ export default function Users() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={!!historyUser} onOpenChange={(o) => !o && setHistoryUser(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display">Histórico - {historyUser?.name}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[65vh] pr-3">
+            {historyUser && <UserHistory name={historyUser.name ?? ""} />}
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </Layout>
   );
 }
