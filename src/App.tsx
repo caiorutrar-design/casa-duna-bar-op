@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { PageSkeleton } from "@/components/PageSkeleton";
 import { Layout } from "@/components/Layout";
+import { useUserRole } from "@/hooks/use-user-role";
 
 const Auth = lazy(() => import("./pages/Auth"));
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -15,7 +16,8 @@ const Stock = lazy(() => import("./pages/Stock"));
 const Entry = lazy(() => import("./pages/Entry"));
 const Reports = lazy(() => import("./pages/Reports"));
 const CustomerOrder = lazy(() => import("./pages/CustomerOrder"));
-const BarNotifications = lazy(() => import("./pages/BarNotifications"));
+const Kitchen = lazy(() => import("./pages/Kitchen"));
+const MenuEditor = lazy(() => import("./pages/MenuEditor"));
 const CashClosure = lazy(() => import("./pages/CashClosure"));
 const IncomeStatement = lazy(() => import("./pages/IncomeStatement"));
 const Events = lazy(() => import("./pages/Events"));
@@ -31,7 +33,17 @@ const PageFallback = () => (
   </Layout>
 );
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const RoleGate = ({ path, children }: { path: string; children: React.ReactNode }) => {
+  const { loading, canAccessPage, homePath } = useUserRole();
+
+  if (loading) return <PageFallback />;
+  if (path !== "/" && !canAccessPage(path)) {
+    return <Navigate to={homePath()} replace />;
+  }
+  return <>{children}</>;
+};
+
+const ProtectedRoute = ({ path, children }: { path: string; children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const [authenticated, setAuthenticated] = useState(false);
 
@@ -57,7 +69,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/auth" replace />;
   }
 
-  return <>{children}</>;
+  return <RoleGate path={path}>{children}</RoleGate>;
 };
 
 const queryClient = new QueryClient();
@@ -72,13 +84,15 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/comanda" element={<CustomerOrder />} />
+              <Route path="/bar" element={<Navigate to="/kitchen" replace />} />
               {[
                 { path: "/", element: <HomePage /> },
                 { path: "/sales", element: <Sales /> },
                 { path: "/stock", element: <Stock /> },
                 { path: "/entry", element: <Entry /> },
                 { path: "/reports", element: <Reports /> },
-                { path: "/bar", element: <BarNotifications /> },
+                { path: "/kitchen", element: <Kitchen /> },
+                { path: "/menu", element: <MenuEditor /> },
                 { path: "/cash-closure", element: <CashClosure /> },
                 { path: "/dre", element: <IncomeStatement /> },
                 { path: "/events", element: <Events /> },
@@ -90,7 +104,7 @@ const App = () => (
                 <Route
                   key={path}
                   path={path}
-                  element={<ProtectedRoute>{element}</ProtectedRoute>}
+                  element={<ProtectedRoute path={path}>{element}</ProtectedRoute>}
                 />
               ))}
               <Route path="*" element={<NotFound />} />
