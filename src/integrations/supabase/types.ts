@@ -642,18 +642,21 @@ export type Database = {
           bartender_name: string
           created_at: string
           id: string
+          photo_url: string | null
           user_id: string
         }
         Insert: {
           bartender_name: string
           created_at?: string
           id?: string
+          photo_url?: string | null
           user_id: string
         }
         Update: {
           bartender_name?: string
           created_at?: string
           id?: string
+          photo_url?: string | null
           user_id?: string
         }
         Relationships: []
