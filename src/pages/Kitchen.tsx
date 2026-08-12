@@ -5,8 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Bell, Check, ChefHat, Clock } from "lucide-react";
+import { Bell, Check, ChefHat, Clock, Timer } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { ElapsedTimer } from "@/components/ElapsedTimer";
 
 interface OrderItem {
   id: string;
@@ -27,7 +28,7 @@ interface OrderItem {
   };
 }
 
-export default function BarNotifications() {
+export default function Kitchen() {
   const [pendingItems, setPendingItems] = useState<OrderItem[]>([]);
   const [preparingItems, setPreparingItems] = useState<OrderItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -66,7 +67,7 @@ export default function BarNotifications() {
     fetchOrders();
 
     const channel = supabase
-      .channel("bar-notifications")
+      .channel("kitchen-notifications")
       .on(
         "postgres_changes",
         {
@@ -180,7 +181,7 @@ export default function BarNotifications() {
           <div>
             <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
               <ChefHat className="h-6 w-6" />
-              Painel do Bar
+              Painel da Cozinha
             </h2>
             <p className="text-muted-foreground">Pedidos em tempo real</p>
           </div>
@@ -228,6 +229,10 @@ export default function BarNotifications() {
                                 <p className="text-sm text-muted-foreground">{item.drinks.brand}</p>
                                 <p className="text-sm font-medium mt-1">
                                   Quantidade: {item.quantity}x
+                                </p>
+                                <p className="text-sm font-semibold mt-1 flex items-center gap-1.5 text-primary">
+                                  <Timer className="h-4 w-4" />
+                                  <ElapsedTimer start={item.created_at} />
                                 </p>
                               </div>
                             </div>
@@ -283,6 +288,10 @@ export default function BarNotifications() {
                                 <p className="text-sm text-muted-foreground">{item.drinks.brand}</p>
                                 <p className="text-sm font-medium mt-1">
                                   Quantidade: {item.quantity}x
+                                </p>
+                                <p className="text-sm font-semibold mt-1 flex items-center gap-1.5 text-primary">
+                                  <Timer className="h-4 w-4" />
+                                  <ElapsedTimer start={item.created_at} />
                                 </p>
                               </div>
                             </div>
