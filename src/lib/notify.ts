@@ -72,8 +72,8 @@ export function showSystemNotification(title: string, body: string, tag?: string
     new Notification(title, {
       body,
       tag,
-      icon: "/icons/icon-192.png",
-      badge: "/icons/icon-192.png",
+      icon: "/icons/icon-512x512.png",
+      badge: "/icons/icon-512x512.png",
     });
   } catch {
     /* ignore */
