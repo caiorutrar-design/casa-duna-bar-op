@@ -67,6 +67,9 @@ export default function Kitchen() {
   useEffect(() => {
     fetchOrders();
 
+    const unlock = () => unlockAudio();
+    window.addEventListener("pointerdown", unlock, { once: true });
+
     const channel = supabase
       .channel("kitchen-notifications")
       .on(
@@ -138,6 +141,7 @@ export default function Kitchen() {
       .subscribe();
 
     return () => {
+      window.removeEventListener("pointerdown", unlock);
       supabase.removeChannel(channel);
     };
   }, [fetchOrders]);
