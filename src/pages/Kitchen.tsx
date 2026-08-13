@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { Bell, Check, ChefHat, Clock, Timer } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ElapsedTimer } from "@/components/ElapsedTimer";
+import { playAlertSound, unlockAudio } from "@/lib/notify";
 
 interface OrderItem {
   id: string;
@@ -66,6 +67,9 @@ export default function Kitchen() {
   useEffect(() => {
     fetchOrders();
 
+    const unlock = () => unlockAudio();
+    window.addEventListener("pointerdown", unlock, { once: true });
+
     const channel = supabase
       .channel("kitchen-notifications")
       .on(
@@ -99,8 +103,7 @@ export default function Kitchen() {
               }
             );
 
-            const audio = new Audio("/notification.mp3");
-            audio.play().catch(() => console.log("Audio play failed"));
+            playAlertSound();
 
             if (data.status === "pending") {
               setPendingItems(prev => [...prev, data]);
@@ -138,6 +141,7 @@ export default function Kitchen() {
       .subscribe();
 
     return () => {
+      window.removeEventListener("pointerdown", unlock);
       supabase.removeChannel(channel);
     };
   }, [fetchOrders]);

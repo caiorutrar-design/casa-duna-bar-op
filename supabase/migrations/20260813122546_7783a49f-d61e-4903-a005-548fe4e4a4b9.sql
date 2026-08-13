@@ -1,0 +1,2 @@
+DELETE FROM public.orders o WHERE o.status = 'open' AND NOT EXISTS (SELECT 1 FROM public.order_items i WHERE i.order_id = o.id);
+UPDATE public.tables t SET status = 'available' WHERE NOT EXISTS (SELECT 1 FROM public.orders o WHERE o.table_id = t.id AND o.status = 'open');
