@@ -712,7 +712,7 @@ export default function Sales() {
                                 variant="outline"
                                 size="icon"
                                 className="h-9 w-9"
-                                disabled={item.status !== "pending"}
+                                disabled={item.status !== "draft"}
                                 onClick={() => changeQuantity(item, -1)}
                               >
                                 <Minus className="h-4 w-4" />
@@ -722,7 +722,7 @@ export default function Sales() {
                                 variant="outline"
                                 size="icon"
                                 className="h-9 w-9"
-                                disabled={item.status !== "pending"}
+                                disabled={item.status !== "draft"}
                                 onClick={() => changeQuantity(item, 1)}
                               >
                                 <Plus className="h-4 w-4" />
@@ -738,7 +738,7 @@ export default function Sales() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9 text-destructive"
-                                disabled={item.status !== "pending"}
+                                disabled={item.status !== "draft"}
                                 onClick={() => removeOrderItem(item)}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -757,18 +757,26 @@ export default function Sales() {
           <div className="shrink-0 border-t bg-card px-4 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
-                {itemCount} item{itemCount === 1 ? "" : "s"} · enviados à cozinha automaticamente
+                {itemCount} item{itemCount === 1 ? "" : "s"}
+                {draftCount > 0 ? ` · ${draftCount} aguardando envio` : " · todos enviados"}
               </span>
               <span className="text-xl font-display font-bold">R$ {totalCost.toFixed(2)}</span>
             </div>
-            <Button
-              className="w-full h-12 text-base"
-              onClick={handleCloseOrderClick}
-              disabled={processing || orderItems.length === 0}
-            >
-              <Check className="h-5 w-5 mr-2" />
-              Fechar comanda
-            </Button>
+            {draftCount > 0 ? (
+              <Button className="w-full h-12 text-base" onClick={sendToStations} disabled={processing}>
+                <Send className="h-5 w-5 mr-2" />
+                Enviar {draftCount} item{draftCount === 1 ? "" : "s"} para cozinha/bar
+              </Button>
+            ) : (
+              <Button
+                className="w-full h-12 text-base"
+                onClick={handleCloseOrderClick}
+                disabled={processing || orderItems.length === 0}
+              >
+                <Check className="h-5 w-5 mr-2" />
+                Fechar comanda
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>
