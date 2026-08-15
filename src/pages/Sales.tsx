@@ -566,7 +566,7 @@ export default function Sales() {
             </DialogTitle>
           </DialogHeader>
 
-          <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={tab} onValueChange={setTab} className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="shrink-0 px-4 pt-3">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="menu" className="gap-1.5">
@@ -582,7 +582,7 @@ export default function Sales() {
             </div>
 
             {/* Cardápio */}
-            <TabsContent value="menu" className="flex-1 overflow-hidden m-0 flex flex-col data-[state=inactive]:hidden">
+            <TabsContent value="menu" className="flex-1 min-h-0 overflow-hidden m-0 flex flex-col data-[state=inactive]:hidden">
               <div className="shrink-0 space-y-2 px-4 py-3">
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -632,7 +632,7 @@ export default function Sales() {
                 </ScrollArea>
               </div>
 
-              <ScrollArea className="flex-1 px-4">
+              <ScrollArea className="flex-1 min-h-0 px-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-4">
                   {filteredDrinks.map((drink) => (
                     <button
@@ -646,6 +646,9 @@ export default function Sales() {
                         <Badge variant="outline" className="shrink-0 font-mono">{drink.item_number}</Badge>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold leading-tight truncate">{drink.name}</p>
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {drink.station === "bar" ? "Bar" : "Cozinha"}
+                          </span>
                           {drink.description && (
                             <p className="text-xs text-muted-foreground line-clamp-2">{drink.description}</p>
                           )}
@@ -666,7 +669,7 @@ export default function Sales() {
             </TabsContent>
 
             {/* Itens da comanda */}
-            <TabsContent value="items" className="flex-1 overflow-hidden m-0 data-[state=inactive]:hidden">
+            <TabsContent value="items" className="flex-1 min-h-0 overflow-hidden m-0 data-[state=inactive]:hidden">
               <ScrollArea className="h-full px-4 py-3">
                 {orderItems.length === 0 ? (
                   <div className="py-16 text-center space-y-2">
