@@ -246,7 +246,7 @@ export default function Sales() {
       if (!result.success) {
         toast.error(result.error || "Erro ao adicionar item");
       } else {
-        toast.success(`${qty}x ${drink.name} enviado à cozinha`);
+        toast.success(`${qty}x ${drink.name} na comanda`);
         await fetchOrderItems(currentOrder.id);
         await fetchTableState();
       }
@@ -271,8 +271,8 @@ export default function Sales() {
   };
 
   const changeQuantity = async (item: OrderItem, delta: number) => {
-    if (item.status !== "pending") {
-      toast.error("Item já está em preparo na cozinha");
+    if (item.status !== "draft") {
+      toast.error("Item já enviado para produção");
       return;
     }
     const next = item.quantity + delta;
@@ -313,10 +313,39 @@ export default function Sales() {
     fetchTableState();
   };
 
+  const sendToStations = async () => {
+    if (!currentOrder) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.rpc("send_order_to_stations", {
+        p_order_id: currentOrder.id,
+      });
+      if (error) throw error;
+      const result = data as { success: boolean; sent?: number; error?: string };
+      if (!result.success) {
+        toast.error(result.error || "Erro ao enviar pedido");
+        return;
+      }
+      toast.success(`${result.sent ?? 0} item(ns) enviados para cozinha/bar`);
+      await fetchOrderItems(currentOrder.id);
+      await fetchTableState();
+      setTab("items");
+    } catch (error) {
+      console.error("Error sending order:", error);
+      toast.error("Erro ao enviar pedido");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleCloseOrderClick = () => {
     if (!currentOrder) return;
     if (orderItems.length === 0) {
       toast.error("Adicione itens à comanda antes de fechar");
+      return;
+    }
+    if (orderItems.some((i) => i.status === "draft")) {
+      toast.error("Envie os itens da mesa para a cozinha/bar antes de fechar");
       return;
     }
     setShowPaymentDialog(true);
@@ -390,6 +419,10 @@ export default function Sales() {
   );
   const itemCount = useMemo(
     () => orderItems.reduce((sum, item) => sum + item.quantity, 0),
+    [orderItems]
+  );
+  const draftCount = useMemo(
+    () => orderItems.filter((i) => i.status === "draft").reduce((s, i) => s + i.quantity, 0),
     [orderItems]
   );
   const readyCount = useMemo(
