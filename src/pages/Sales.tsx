@@ -21,6 +21,7 @@ import {
   Search,
   BellRing,
   ChefHat,
+  Send,
   UtensilsCrossed,
   Receipt,
 } from "lucide-react";
@@ -54,6 +55,7 @@ interface Drink {
   item_number: number | null;
   price?: number;
   description?: string | null;
+  station?: string | null;
 }
 
 interface Order {
@@ -77,7 +79,8 @@ interface OrderItem {
 const MENU_URL = "https://cafe.dunaclub.com";
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
-  pending: { label: "Na cozinha", className: "bg-muted text-muted-foreground" },
+  draft: { label: "Na mesa", className: "bg-secondary text-secondary-foreground" },
+  pending: { label: "Enviado", className: "bg-muted text-muted-foreground" },
   preparing: { label: "Preparando", className: "bg-warning text-warning-foreground" },
   ready: { label: "Pronto", className: "bg-primary text-primary-foreground" },
   delivered: { label: "Entregue", className: "bg-success text-primary-foreground" },
@@ -243,7 +246,7 @@ export default function Sales() {
       if (!result.success) {
         toast.error(result.error || "Erro ao adicionar item");
       } else {
-        toast.success(`${qty}x ${drink.name} enviado à cozinha`);
+        toast.success(`${qty}x ${drink.name} na comanda`);
         await fetchOrderItems(currentOrder.id);
         await fetchTableState();
       }
@@ -268,8 +271,8 @@ export default function Sales() {
   };
 
   const changeQuantity = async (item: OrderItem, delta: number) => {
-    if (item.status !== "pending") {
-      toast.error("Item já está em preparo na cozinha");
+    if (item.status !== "draft") {
+      toast.error("Item já enviado para produção");
       return;
     }
     const next = item.quantity + delta;
@@ -310,10 +313,39 @@ export default function Sales() {
     fetchTableState();
   };
 
+  const sendToStations = async () => {
+    if (!currentOrder) return;
+    setProcessing(true);
+    try {
+      const { data, error } = await supabase.rpc("send_order_to_stations", {
+        p_order_id: currentOrder.id,
+      });
+      if (error) throw error;
+      const result = data as { success: boolean; sent?: number; error?: string };
+      if (!result.success) {
+        toast.error(result.error || "Erro ao enviar pedido");
+        return;
+      }
+      toast.success(`${result.sent ?? 0} item(ns) enviados para cozinha/bar`);
+      await fetchOrderItems(currentOrder.id);
+      await fetchTableState();
+      setTab("items");
+    } catch (error) {
+      console.error("Error sending order:", error);
+      toast.error("Erro ao enviar pedido");
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   const handleCloseOrderClick = () => {
     if (!currentOrder) return;
     if (orderItems.length === 0) {
       toast.error("Adicione itens à comanda antes de fechar");
+      return;
+    }
+    if (orderItems.some((i) => i.status === "draft")) {
+      toast.error("Envie os itens da mesa para a cozinha/bar antes de fechar");
       return;
     }
     setShowPaymentDialog(true);
@@ -387,6 +419,10 @@ export default function Sales() {
   );
   const itemCount = useMemo(
     () => orderItems.reduce((sum, item) => sum + item.quantity, 0),
+    [orderItems]
+  );
+  const draftCount = useMemo(
+    () => orderItems.filter((i) => i.status === "draft").reduce((s, i) => s + i.quantity, 0),
     [orderItems]
   );
   const readyCount = useMemo(
@@ -530,7 +566,7 @@ export default function Sales() {
             </DialogTitle>
           </DialogHeader>
 
-          <Tabs value={tab} onValueChange={setTab} className="flex-1 flex flex-col overflow-hidden">
+          <Tabs value={tab} onValueChange={setTab} className="flex-1 min-h-0 flex flex-col overflow-hidden">
             <div className="shrink-0 px-4 pt-3">
               <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="menu" className="gap-1.5">
@@ -546,7 +582,7 @@ export default function Sales() {
             </div>
 
             {/* Cardápio */}
-            <TabsContent value="menu" className="flex-1 overflow-hidden m-0 flex flex-col data-[state=inactive]:hidden">
+            <TabsContent value="menu" className="flex-1 min-h-0 overflow-hidden m-0 flex flex-col data-[state=inactive]:hidden">
               <div className="shrink-0 space-y-2 px-4 py-3">
                 <div className="flex gap-2">
                   <div className="relative flex-1">
@@ -596,7 +632,7 @@ export default function Sales() {
                 </ScrollArea>
               </div>
 
-              <ScrollArea className="flex-1 px-4">
+              <ScrollArea className="flex-1 min-h-0 px-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-4">
                   {filteredDrinks.map((drink) => (
                     <button
@@ -610,6 +646,9 @@ export default function Sales() {
                         <Badge variant="outline" className="shrink-0 font-mono">{drink.item_number}</Badge>
                         <div className="flex-1 min-w-0">
                           <p className="font-semibold leading-tight truncate">{drink.name}</p>
+                          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                            {drink.station === "bar" ? "Bar" : "Cozinha"}
+                          </span>
                           {drink.description && (
                             <p className="text-xs text-muted-foreground line-clamp-2">{drink.description}</p>
                           )}
@@ -630,7 +669,7 @@ export default function Sales() {
             </TabsContent>
 
             {/* Itens da comanda */}
-            <TabsContent value="items" className="flex-1 overflow-hidden m-0 data-[state=inactive]:hidden">
+            <TabsContent value="items" className="flex-1 min-h-0 overflow-hidden m-0 data-[state=inactive]:hidden">
               <ScrollArea className="h-full px-4 py-3">
                 {orderItems.length === 0 ? (
                   <div className="py-16 text-center space-y-2">
@@ -673,7 +712,7 @@ export default function Sales() {
                                 variant="outline"
                                 size="icon"
                                 className="h-9 w-9"
-                                disabled={item.status !== "pending"}
+                                disabled={item.status !== "draft"}
                                 onClick={() => changeQuantity(item, -1)}
                               >
                                 <Minus className="h-4 w-4" />
@@ -683,7 +722,7 @@ export default function Sales() {
                                 variant="outline"
                                 size="icon"
                                 className="h-9 w-9"
-                                disabled={item.status !== "pending"}
+                                disabled={item.status !== "draft"}
                                 onClick={() => changeQuantity(item, 1)}
                               >
                                 <Plus className="h-4 w-4" />
@@ -699,7 +738,7 @@ export default function Sales() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9 text-destructive"
-                                disabled={item.status !== "pending"}
+                                disabled={item.status !== "draft"}
                                 onClick={() => removeOrderItem(item)}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -718,18 +757,26 @@ export default function Sales() {
           <div className="shrink-0 border-t bg-card px-4 py-3 space-y-2">
             <div className="flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
-                {itemCount} item{itemCount === 1 ? "" : "s"} · enviados à cozinha automaticamente
+                {itemCount} item{itemCount === 1 ? "" : "s"}
+                {draftCount > 0 ? ` · ${draftCount} aguardando envio` : " · todos enviados"}
               </span>
               <span className="text-xl font-display font-bold">R$ {totalCost.toFixed(2)}</span>
             </div>
-            <Button
-              className="w-full h-12 text-base"
-              onClick={handleCloseOrderClick}
-              disabled={processing || orderItems.length === 0}
-            >
-              <Check className="h-5 w-5 mr-2" />
-              Fechar comanda
-            </Button>
+            {draftCount > 0 ? (
+              <Button className="w-full h-12 text-base" onClick={sendToStations} disabled={processing}>
+                <Send className="h-5 w-5 mr-2" />
+                Enviar {draftCount} item{draftCount === 1 ? "" : "s"} para cozinha/bar
+              </Button>
+            ) : (
+              <Button
+                className="w-full h-12 text-base"
+                onClick={handleCloseOrderClick}
+                disabled={processing || orderItems.length === 0}
+              >
+                <Check className="h-5 w-5 mr-2" />
+                Fechar comanda
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

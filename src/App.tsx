@@ -17,6 +17,7 @@ const Entry = lazy(() => import("./pages/Entry"));
 const Reports = lazy(() => import("./pages/Reports"));
 const CustomerOrder = lazy(() => import("./pages/CustomerOrder"));
 const Kitchen = lazy(() => import("./pages/Kitchen"));
+const Bar = lazy(() => import("./pages/Bar"));
 const MenuEditor = lazy(() => import("./pages/MenuEditor"));
 const CashClosure = lazy(() => import("./pages/CashClosure"));
 const IncomeStatement = lazy(() => import("./pages/IncomeStatement"));
@@ -84,7 +85,6 @@ const App = () => (
             <Routes>
               <Route path="/auth" element={<Auth />} />
               <Route path="/comanda" element={<CustomerOrder />} />
-              <Route path="/bar" element={<Navigate to="/kitchen" replace />} />
               {[
                 { path: "/", element: <HomePage /> },
                 { path: "/sales", element: <Sales /> },
@@ -92,6 +92,7 @@ const App = () => (
                 { path: "/entry", element: <Entry /> },
                 { path: "/reports", element: <Reports /> },
                 { path: "/kitchen", element: <Kitchen /> },
+                { path: "/bar", element: <Bar /> },
                 { path: "/menu", element: <MenuEditor /> },
                 { path: "/cash-closure", element: <CashClosure /> },
                 { path: "/dre", element: <IncomeStatement /> },

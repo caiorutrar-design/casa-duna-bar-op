@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { DollarSign, TrendingUp, Package, AlertTriangle, ShoppingCart, ArrowRight } from "lucide-react";
 import { AuditReport } from "@/components/AuditReport";
+import { SalesByUserReport } from "@/components/SalesByUserReport";
 import { SwipeableCard } from "@/components/SwipeableCard";
 
 interface StockAlert {
@@ -139,6 +140,8 @@ export default function Reports() {
             </Card>
           </SwipeableCard>
         </div>
+
+        <SalesByUserReport />
 
         <AuditReport />
 

@@ -348,6 +348,7 @@ export type Database = {
           item_number: number | null
           name: string
           price: number
+          station: string
           updated_at: string | null
         }
         Insert: {
@@ -360,6 +361,7 @@ export type Database = {
           item_number?: number | null
           name: string
           price?: number
+          station?: string
           updated_at?: string | null
         }
         Update: {
@@ -372,6 +374,7 @@ export type Database = {
           item_number?: number | null
           name?: string
           price?: number
+          station?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -859,6 +862,7 @@ export type Database = {
         }
         Returns: Json
       }
+      send_order_to_stations: { Args: { p_order_id: string }; Returns: Json }
       update_ingredient_stock: {
         Args: { p_ingredient_id: string; p_quantity: number }
         Returns: undefined

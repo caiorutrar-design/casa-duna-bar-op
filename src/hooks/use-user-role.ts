@@ -10,6 +10,7 @@ export type AppRole = "bartender" | "manager" | "admin" | "garcom" | "barman" | 
 const MANAGER_PAGES = [
   "/sales",
   "/kitchen",
+  "/bar",
   "/stock",
   "/entry",
   "/cash-closure",
@@ -27,7 +28,7 @@ const ROLE_PAGES: Record<AppRole, string[]> = {
   manager: MANAGER_PAGES,
   garcom: ["/sales"],
   bartender: ["/sales"],
-  barman: ["/kitchen"],
+  barman: ["/kitchen", "/bar"],
   usuario: [],
 };
 
@@ -36,25 +37,39 @@ export function useUserRole() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const checkRole = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) { setRoles([]); setLoading(false); return; }
+    let active = true;
 
+    const loadRoles = async (userId?: string) => {
+      try {
+        let uid = userId;
+        if (!uid) {
+          const { data: { session } } = await supabase.auth.getSession();
+          uid = session?.user?.id;
+        }
+        if (!uid) {
+          if (active) { setRoles([]); setLoading(false); }
+          return;
+        }
         const { data } = await supabase
           .from("user_roles")
           .select("role")
-          .eq("user_id", user.id);
-
-        const userRoles = (data || []).map((r: any) => r.role as AppRole);
-        setRoles(userRoles);
+          .eq("user_id", uid);
+        if (active) setRoles((data || []).map((r: any) => r.role as AppRole));
       } catch {
-        setRoles([]);
+        // mantém as permissões atuais em caso de falha de rede
       } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
-    checkRole();
+
+    loadRoles();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) loadRoles(session.user.id);
+      else { setRoles([]); setLoading(false); }
+    });
+
+    return () => { active = false; subscription.unsubscribe(); };
   }, []);
 
   const isAdmin = roles.includes("admin");
