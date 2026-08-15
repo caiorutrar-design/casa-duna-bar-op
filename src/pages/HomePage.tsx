@@ -1,5 +1,5 @@
 import { NavLink } from "@/components/NavLink";
-import { Home, Package, TrendingUp, FileText, ChefHat, BookOpen, DollarSign, BarChart3, CalendarDays, Users, PackageMinus, Shield, UserCog } from "lucide-react";
+import { Home, Package, TrendingUp, FileText, ChefHat, BookOpen, DollarSign, BarChart3, CalendarDays, Users, PackageMinus, Shield, UserCog, Martini } from "lucide-react";
 import { useUserRole } from "@/hooks/use-user-role";
 import { useState, useEffect } from "react";
 import { SettingsDialog } from "@/components/SettingsDialog";
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: "/stock", icon: Package, label: "Estoque", path: "/stock" },
   { to: "/entry", icon: TrendingUp, label: "Entrada", path: "/entry" },
   { to: "/kitchen", icon: ChefHat, label: "Cozinha", path: "/kitchen" },
+  { to: "/bar", icon: Martini, label: "Bar", path: "/bar" },
   { to: "/cash-closure", icon: DollarSign, label: "Caixa", path: "/cash-closure" },
   { to: "/dre", icon: BarChart3, label: "DRE", path: "/dre" },
   { to: "/reports", icon: FileText, label: "Alertas", path: "/reports" },

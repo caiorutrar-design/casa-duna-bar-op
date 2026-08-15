@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -21,6 +22,7 @@ const schema = z.object({
   description: z.string().trim().max(300).optional().or(z.literal("")),
   price: z.number().min(0, "Preço inválido").max(100000),
   item_number: z.number().int().min(1, "Número inválido").max(9999),
+  station: z.enum(["cozinha", "bar"]),
   active: z.boolean(),
 });
 
@@ -31,6 +33,7 @@ type Drink = {
   description: string | null;
   price: number;
   item_number: number | null;
+  station: string | null;
   active: boolean | null;
 };
 
@@ -41,10 +44,11 @@ type FormState = {
   description: string;
   price: string;
   item_number: string;
+  station: "cozinha" | "bar";
   active: boolean;
 };
 
-const emptyForm: FormState = { name: "", brand: "", description: "", price: "", item_number: "", active: true };
+const emptyForm: FormState = { name: "", brand: "", description: "", price: "", item_number: "", station: "cozinha", active: true };
 
 export default function MenuEditor() {
   const queryClient = useQueryClient();
@@ -56,7 +60,7 @@ export default function MenuEditor() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("drinks")
-        .select("id, name, brand, description, price, item_number, active")
+        .select("id, name, brand, description, price, item_number, station, active")
         .order("item_number", { ascending: true })
         .limit(1000);
       if (error) throw error;
@@ -74,6 +78,7 @@ export default function MenuEditor() {
         description: form.description,
         price: Number(form.price),
         item_number: Number(form.item_number),
+        station: form.station,
         active: form.active,
       });
       if (!parsed.success) throw new Error(parsed.error.issues[0].message);
@@ -112,6 +117,7 @@ export default function MenuEditor() {
       description: d.description ?? "",
       price: String(d.price ?? ""),
       item_number: String(d.item_number ?? ""),
+      station: d.station === "bar" ? "bar" : "cozinha",
       active: d.active !== false,
     });
     setOpen(true);
@@ -150,6 +156,9 @@ export default function MenuEditor() {
                       {d.name}{" "}
                       {d.active === false && <Badge variant="secondary" className="ml-1">inativo</Badge>}
                     </p>
+                    <Badge variant={d.station === "bar" ? "default" : "secondary"} className="mt-0.5">
+                      {d.station === "bar" ? "Bar" : "Cozinha"}
+                    </Badge>
                     {d.description && (
                       <p className="text-xs text-muted-foreground truncate">{d.description}</p>
                     )}
@@ -205,6 +214,16 @@ export default function MenuEditor() {
               <Label htmlFor="price">Preço (R$)</Label>
               <Input id="price" type="number" min={0} step="0.01" value={form.price}
                 onChange={(e) => setForm({ ...form, price: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Preparo em</Label>
+              <Select value={form.station} onValueChange={(v) => setForm({ ...form, station: v as "cozinha" | "bar" })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cozinha">Cozinha</SelectItem>
+                  <SelectItem value="bar">Bar</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex items-center gap-3 pt-6">
               <Switch id="active" checked={form.active}
