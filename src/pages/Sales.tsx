@@ -21,6 +21,7 @@ import {
   Search,
   BellRing,
   ChefHat,
+  Send,
   UtensilsCrossed,
   Receipt,
 } from "lucide-react";
@@ -54,6 +55,7 @@ interface Drink {
   item_number: number | null;
   price?: number;
   description?: string | null;
+  station?: string | null;
 }
 
 interface Order {
@@ -77,7 +79,8 @@ interface OrderItem {
 const MENU_URL = "https://cafe.dunaclub.com";
 
 const STATUS_META: Record<string, { label: string; className: string }> = {
-  pending: { label: "Na cozinha", className: "bg-muted text-muted-foreground" },
+  draft: { label: "Na mesa", className: "bg-secondary text-secondary-foreground" },
+  pending: { label: "Enviado", className: "bg-muted text-muted-foreground" },
   preparing: { label: "Preparando", className: "bg-warning text-warning-foreground" },
   ready: { label: "Pronto", className: "bg-primary text-primary-foreground" },
   delivered: { label: "Entregue", className: "bg-success text-primary-foreground" },
