@@ -1,0 +1,2 @@
+ALTER TABLE public.order_items DROP CONSTRAINT IF EXISTS order_items_status_check;
+ALTER TABLE public.order_items ADD CONSTRAINT order_items_status_check CHECK (status = ANY (ARRAY['draft'::text,'pending'::text,'preparing'::text,'ready'::text,'delivered'::text,'cancelled'::text]));
