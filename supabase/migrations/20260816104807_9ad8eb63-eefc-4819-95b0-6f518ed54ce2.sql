@@ -1,0 +1,1 @@
+UPDATE public.drinks SET station = 'bar' WHERE brand IN ('Smoothies','Copão de Fruta','Cafés Gelados Especiais');
